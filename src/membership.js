@@ -26,28 +26,38 @@ const Membership = () => {
 
   useEffect(() => {
     let isMounted = true;
-
+  
     const initialize = async () => {
       try {
         const { auth: authInstance } = await initializeFirebase();
         if (!isMounted) return;
-    
-        // Add some error handling here
+  
+        // authInstance 검증
         if (!authInstance) {
           console.error("initializeFirebase returned null or undefined");
+          setInitializationStatus("failed");
           return;
         }
-    
-        const verifier = new RecaptchaVerifier(authInstance, "recaptcha-container", {
+  
+        // appVerificationDisabledForTesting 설정
+        try {
+          authInstance.appVerificationDisabledForTesting = true; // 테스트용 설정
+        } catch (error) {
+          console.error("Failed to set appVerificationDisabledForTesting:", error);
+          setInitializationStatus("failed");
+          return;
+        }
+  
+        const verifier = new RecaptchaVerifier("recaptcha-container", {
           size: "invisible",
           callback: () => {
             console.log("✅ reCAPTCHA verified");
           },
           "expired-callback": () => {
             console.log("⚠️ reCAPTCHA expired");
-          }
-        });
-    
+          },
+        }, authInstance);
+  
         setAuth(authInstance);
         setRecaptchaVerifier(verifier);
         setInitializationStatus("success");
@@ -56,9 +66,9 @@ const Membership = () => {
         setInitializationStatus("error");
       }
     };
-
+  
     initialize();
-
+  
     return () => {
       isMounted = false;
       if (recaptchaVerifier) {
