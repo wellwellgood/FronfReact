@@ -1,4 +1,4 @@
-// membership.js - 병합 완료된 최종본
+i// membership.js - 병합 완료된 최종본
 import React, { useState, useEffect } from "react";
 import { initializeFirebase } from "./firebase";
 import { signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
@@ -31,7 +31,13 @@ const Membership = () => {
       try {
         const { auth: authInstance } = await initializeFirebase();
         if (!isMounted) return;
-
+    
+        // Add some error handling here
+        if (!authInstance) {
+          console.error("initializeFirebase returned null or undefined");
+          return;
+        }
+    
         const verifier = new RecaptchaVerifier(authInstance, "recaptcha-container", {
           size: "invisible",
           callback: () => {
@@ -41,7 +47,7 @@ const Membership = () => {
             console.log("⚠️ reCAPTCHA expired");
           }
         });
-
+    
         setAuth(authInstance);
         setRecaptchaVerifier(verifier);
         setInitializationStatus("success");
