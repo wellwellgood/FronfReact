@@ -35,15 +35,11 @@ export const initializeFirebase = () => {
   }
 
   if (!appCheck) {
-    try {
-      appCheck = initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider(process.env.REACT_APP_RECAPTCHA_KEY),
-        isTokenAutoRefreshEnabled: true,
-      });
-      console.log("✅ Firebase AppCheck initialized");
-    } catch (error) {
-      console.warn("⚠️ AppCheck 초기화 실패:", error.message);
-    }
+    appCheck = initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(process.env.REACT_APP_RECAPTCHA_KEY),
+      isTokenAutoRefreshEnabled: true,
+    });
+    console.log("✅ AppCheck initialized");
   }
 
   return { app, auth, db };
