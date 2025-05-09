@@ -57,13 +57,13 @@ export const initializeRecaptcha = async (options = {}) => {
       
       // Create and render the reCAPTCHA
       recaptchaInstance = new RecaptchaVerifier(
-        auth,
         containerId,
         {
           size,
           callback: () => console.log("✅ reCAPTCHA verified"),
           "expired-callback": () => console.log("⚠️ reCAPTCHA expired")
-        }
+        },
+        auth // ✅ 반드시 마지막 인자에 위치해야 함!
       );
       
       // Force rendering to ensure it's ready
