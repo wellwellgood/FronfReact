@@ -1,14 +1,57 @@
-// membership.js - RecaptchaVerifier 연동 최종 완성본
+// membership.js - Firebase + reCAPTCHA 통합 단일버전
 import React, { useState, useEffect } from "react";
-import { initializeFirebase } from "./firebase";
-import { signInWithPhoneNumber } from "firebase/auth";
-import { generateRecaptcha, clearRecaptcha } from "./reCAPCHA";
+import { initializeApp } from "firebase/app";
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import axios from "axios";
 import styles from "./membership.module.css";
 
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+};
+
+let app, auth, recaptchaVerifier;
+
+const initializeFirebase = () => {
+  if (!app) app = initializeApp(firebaseConfig);
+  if (!auth) auth = getAuth(app);
+  return auth;
+};
+
+const generateRecaptcha = (authInstance) => {
+  if (!authInstance) {
+    console.error("❌ authInstance가 undefined입니다.");
+    return null;
+  }
+
+  if (recaptchaVerifier) {
+    console.log("ℹ️ 기존 reCAPTCHA 재사용");
+    return recaptchaVerifier;
+  }
+
+  try {
+    recaptchaVerifier = new RecaptchaVerifier(
+      "recaptcha-container",
+      {
+        size: "invisible",
+        callback: () => console.log("✅ reCAPTCHA verified"),
+        "expired-callback": () => console.warn("⚠️ reCAPTCHA expired")
+      },
+      authInstance
+    );
+    console.log("✅ reCAPTCHA 초기화 완료");
+    return recaptchaVerifier;
+  } catch (err) {
+    console.error("❌ reCAPTCHA 생성 오류:", err);
+    return null;
+  }
+};
+
 const Membership = () => {
-  const [auth, setAuth] = useState(null);
-  const [recaptchaVerifier, setRecaptchaVerifier] = useState(null);
   const [formData, setFormData] = useState({
     username: "",
     name: "",
@@ -25,21 +68,9 @@ const Membership = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const { auth: authInstance } = initializeFirebase();
-    if (!authInstance) {
-      console.error("❌ authInstance 초기화 실패");
-      return;
-    }
-    setAuth(authInstance);
-
-    const verifier = generateRecaptcha(authInstance);
-    if (!verifier) {
-      console.error("❌ reCAPTCHA 생성 실패");
-      return;
-    }
-    setRecaptchaVerifier(verifier);
-
-    return () => clearRecaptcha();
+    const authInstance = initializeFirebase();
+    if (!authInstance) return;
+    generateRecaptcha(authInstance);
   }, []);
 
   const handleChange = (e) => {
@@ -55,8 +86,10 @@ const Membership = () => {
   };
 
   const handleSendCode = async () => {
-    if (!auth || !recaptchaVerifier) {
-      alert("인증 시스템 초기화에 실패했습니다.");
+    const authInstance = initializeFirebase();
+    const verifier = generateRecaptcha(authInstance);
+    if (!authInstance || !verifier) {
+      alert("인증 시스템 오류. 관리자에게 문의하세요.");
       return;
     }
 
@@ -64,7 +97,7 @@ const Membership = () => {
 
     try {
       const phoneNumber = formatPhoneNumber();
-      const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
+      const confirmationResult = await signInWithPhoneNumber(authInstance, phoneNumber, verifier);
       setConfirmation(confirmationResult);
       alert("✅ 인증번호가 전송되었습니다.");
     } catch (error) {
@@ -98,7 +131,6 @@ const Membership = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!verifySuccess || !firebaseUser) {
       alert("❌ 휴대폰 인증을 먼저 완료해주세요.");
       return;
@@ -128,7 +160,6 @@ const Membership = () => {
     } finally {
       setIsLoading(false);
     }
-  };
 
   return (
     <div className={styles.findID}>
