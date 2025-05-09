@@ -39,15 +39,25 @@ const Membership = () => {
           return;
         }
   
-        const verifier = new RecaptchaVerifier("recaptcha-container", {
-          size: "invisible",
-          callback: () => {
-            console.log("✅ reCAPTCHA verified");
+        const verifier = new RecaptchaVerifier(
+          "recaptcha-container",
+          {
+            size: "invisible",
+            callback: () => {
+              console.log("✅ reCAPTCHA verified");
+            },
+            "expired-callback": () => {
+              console.log("⚠️ reCAPTCHA expired");
+            },
           },
-          "expired-callback": () => {
-            console.log("⚠️ reCAPTCHA expired");
-          },
-        }, authInstance);
+          authInstance // ✅ 반드시 세 번째 인자에 넣기
+        );
+
+        if (!authInstance) {
+          console.error("🔥 authInstance가 undefined입니다.");
+          console.log("✅ authInstance 확인:", authInstance);
+          return;
+        }
   
         setAuth(authInstance);
         setRecaptchaVerifier(verifier);
