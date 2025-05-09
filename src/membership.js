@@ -39,15 +39,6 @@ const Membership = () => {
           return;
         }
   
-        // appVerificationDisabledForTesting 설정
-        try {
-          authInstance.appVerificationDisabledForTesting = true; // 테스트용 설정
-        } catch (error) {
-          console.error("Failed to set appVerificationDisabledForTesting:", error);
-          setInitializationStatus("failed");
-          return;
-        }
-  
         const verifier = new RecaptchaVerifier("recaptcha-container", {
           size: "invisible",
           callback: () => {
