@@ -1,4 +1,3 @@
-i// membership.js - 병합 완료된 최종본
 import React, { useState, useEffect } from "react";
 import { initializeFirebase } from "./firebase";
 import { signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
@@ -26,50 +25,37 @@ const Membership = () => {
 
   useEffect(() => {
     let isMounted = true;
-  
+
     const initialize = async () => {
       try {
         const { auth: authInstance } = await initializeFirebase();
         if (!isMounted) return;
-  
-        // authInstance 검증
-        if (!authInstance) {
-          console.error("initializeFirebase returned null or undefined");
-          setInitializationStatus("failed");
-          return;
-        }
-  
+
+        setAuth(authInstance);
+
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
         const verifier = new RecaptchaVerifier(
           "recaptcha-container",
           {
             size: "invisible",
-            callback: () => {
-              console.log("✅ reCAPTCHA verified");
-            },
-            "expired-callback": () => {
-              console.log("⚠️ reCAPTCHA expired");
-            },
+            callback: () => console.log("✅ reCAPTCHA verified"),
+            "expired-callback": () => console.log("⚠️ reCAPTCHA expired"),
           },
-          authInstance // ✅ 반드시 세 번째 인자에 넣기
+          authInstance
         );
 
-        if (!authInstance) {
-          console.error("🔥 authInstance가 undefined입니다.");
-          console.log("✅ authInstance 확인:", authInstance);
-          return;
-        }
-  
-        setAuth(authInstance);
         setRecaptchaVerifier(verifier);
         setInitializationStatus("success");
+        console.log("✅ RecaptchaVerifier initialized");
       } catch (error) {
         console.error("초기화 실패:", error);
         setInitializationStatus("error");
       }
     };
-  
+
     initialize();
-  
+
     return () => {
       isMounted = false;
       if (recaptchaVerifier) {
@@ -84,12 +70,12 @@ const Membership = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const formatPhoneNumber = () => {
     const { phone1, phone2, phone3 } = formData;
-    const formattedPhone = phone1.startsWith("0") 
+    const formattedPhone = phone1.startsWith("0")
       ? `+82${phone1.slice(1)}${phone2}${phone3}`
       : `+82${phone1}${phone2}${phone3}`;
     return formattedPhone;
