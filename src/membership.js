@@ -39,7 +39,7 @@ const Membership = () => {
         console.log("Firebase 초기화 완료, reCAPTCHA 설정 중...");
         
         // reCAPTCHA 설정 - 수정된 부분 (Firebase 인스턴스에서 reCAPTCHA 생성)
-        const verifier = new RecaptchaVerifier("recaptcha-container", {
+        const verifier = new RecaptchaVerifier(authInstance, "recaptcha-container", {
           size: "invisible",
           callback: () => {
             console.log("✅ reCAPTCHA verified");
@@ -47,7 +47,7 @@ const Membership = () => {
           "expired-callback": () => {
             console.log("⚠️ reCAPTCHA expired");
           }
-        }, authInstance);
+        });
 
         setAuth(authInstance);
         setRecaptchaVerifier(verifier);
@@ -118,10 +118,10 @@ const Membership = () => {
         if (recaptchaVerifier) {
           recaptchaVerifier.clear();
         }
-        const newVerifier = new RecaptchaVerifier("recaptcha-container", {
+        const newVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
           size: "invisible",
           callback: () => console.log("✅ reCAPTCHA verified"),
-        }, auth);
+        });
         setRecaptchaVerifier(newVerifier);
       } catch (verifierError) {
         console.error("❌ reCAPTCHA 재설정 실패:", verifierError);
