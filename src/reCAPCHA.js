@@ -1,115 +1,50 @@
-// reCAPTCHA.js - Centralized reCAPTCHA management
-import { getAuth } from "firebase/auth";
+// reCAPCHA.js - 수정된 최종본 (RecaptchaVerifier 인자 순서 고정)
 import { RecaptchaVerifier } from "firebase/auth";
 
-// Track initialization state
 let recaptchaInstance = null;
-let isInitializing = false;
-let initializationPromise = null;
 
-/**
- * Safely initializes a new reCAPTCHA instance
- * 
- * @param {Object} options - Configuration options
- * @param {string} options.containerId - DOM ID for the reCAPTCHA container (default: "recaptcha-container")
- * @param {string} options.size - reCAPTCHA size (default: "invisible")
- * @returns {Promise<RecaptchaVerifier>} - The initialized reCAPTCHA instance
- */
-export const initializeRecaptcha = async (options = {}) => {
-  // If already initializing, return the existing promise
-  if (isInitializing && initializationPromise) {
-    return initializationPromise;
+export const generateRecaptcha = (auth, containerId = "recaptcha-container", size = "invisible") => {
+  if (!auth) {
+    console.error("❌ auth 인스턴스가 undefined입니다. Recaptcha 생성 실패");
+    return null;
   }
-  
-  // Set initialization flag
-  isInitializing = true;
-  
-  // Create new initialization promise
-  initializationPromise = new Promise(async (resolve, reject) => {
-    try {
-      // Clean up existing instance if it exists
-      if (recaptchaInstance) {
-        try {
-          await recaptchaInstance.clear();
-          console.log("✅ Cleared existing reCAPTCHA instance");
-        } catch (clearError) {
-          console.warn("⚠️ Error clearing existing reCAPTCHA:", clearError);
-          // Continue even if clearing fails
-        }
-        recaptchaInstance = null;
-      }
-      
-      // Default options
-      const containerId = options.containerId || "recaptcha-container";
-      const size = options.size || "invisible";
-      
-      // Verify container exists
-      const container = document.getElementById(containerId);
-      if (!container) {
-        throw new Error(`reCAPTCHA container #${containerId} not found in DOM`);
-      }
-      
-      // Get Firebase Auth instance
-      const auth = getAuth();
-      if (!auth) {
-        throw new Error("Firebase Auth is not initialized");
-      }
-      
-      // Create and render the reCAPTCHA
-      recaptchaInstance = new RecaptchaVerifier(
-        auth,
-        containerId,
-        {
-          size,
-          callback: () => console.log("✅ reCAPTCHA verified"),
-          "expired-callback": () => console.log("⚠️ reCAPTCHA expired")
-        }
-      );
-      
-      // Force rendering to ensure it's ready
-      await recaptchaInstance.render();
-      console.log("✅ reCAPTCHA successfully rendered");
-      
-      resolve(recaptchaInstance);
-    } catch (error) {
-      console.error("❌ reCAPTCHA initialization failed:", error);
-      reject(error);
-    } finally {
-      isInitializing = false;
-    }
-  });
-  
-  return initializationPromise;
-};
 
-/**
- * Gets the current reCAPTCHA instance or creates a new one
- * 
- * @param {Object} options - Configuration options for new instance if needed
- * @returns {Promise<RecaptchaVerifier>} - reCAPTCHA instance
- */
-export const getRecaptchaVerifier = async (options = {}) => {
   if (recaptchaInstance) {
+    console.log("ℹ️ RecaptchaVerifier 이미 존재함. 재사용");
     return recaptchaInstance;
   }
-  
-  return initializeRecaptcha(options);
+
+  try {
+    recaptchaInstance = new RecaptchaVerifier(
+      containerId,
+      {
+        size,
+        callback: () => {
+          console.log("✅ reCAPTCHA verified");
+        },
+        "expired-callback": () => {
+          console.log("⚠️ reCAPTCHA expired");
+        }
+      },
+      auth // ✅ 세 번째 인자로 정확히 전달
+    );
+
+    console.log("✅ RecaptchaVerifier 초기화 완료");
+    return recaptchaInstance;
+  } catch (error) {
+    console.error("❌ RecaptchaVerifier 생성 실패:", error);
+    return null;
+  }
 };
 
-/**
- * Clears the current reCAPTCHA instance
- * 
- * @returns {Promise<void>}
- */
-export const clearRecaptchaVerifier = async () => {
-  if (!recaptchaInstance) return;
-  
-  try {
-    await recaptchaInstance.clear();
+export const clearRecaptcha = () => {
+  if (recaptchaInstance) {
+    try {
+      recaptchaInstance.clear();
+      console.log("🧹 RecaptchaVerifier 제거 완료");
+    } catch (error) {
+      console.warn("⚠️ RecaptchaVerifier 제거 중 오류:", error);
+    }
     recaptchaInstance = null;
-    console.log("✅ reCAPTCHA instance cleared");
-  } catch (error) {
-    console.error("❌ Error clearing reCAPTCHA:", error);
-    throw error;
   }
 };

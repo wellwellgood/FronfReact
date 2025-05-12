@@ -1,12 +1,14 @@
-i// membership.js - 병합 완료된 최종본
-import React, { useState, useEffect } from "react";
-import { initializeFirebase } from "./firebase";
-import { signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
+import React, { useState, useEffect, useRef } from "react";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { getFirebaseAuth, initializeFirebase } from "./firebase";
 import axios from "axios";
 import styles from "./membership.module.css";
 
 const Membership = () => {
-  const [auth, setAuth] = useState(null);
+  // useRef로 reCAPTCHA 컨테이너 참조 생성
+  const recaptchaContainerRef = useRef(null);
+  const recaptchaVerifierRef = useRef(null);
+  
   const [formData, setFormData] = useState({
     username: "",
     name: "",
@@ -21,45 +23,47 @@ const Membership = () => {
   const [verifySuccess, setVerifySuccess] = useState(false);
   const [firebaseUser, setFirebaseUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [initializationStatus, setInitializationStatus] = useState("pending");
-  const [recaptchaVerifier, setRecaptchaVerifier] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [firebaseInitialized, setFirebaseInitialized] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const initialize = async () => {
-      try {
-        const { auth: authInstance } = await initializeFirebase();
-        if (!isMounted) return;
-
-        const verifier = new RecaptchaVerifier(authInstance, "recaptcha-container", {
-          size: "invisible",
-          callback: () => {
-            console.log("✅ reCAPTCHA verified");
-          },
-          "expired-callback": () => {
-            console.log("⚠️ reCAPTCHA expired");
-          }
-        });
-
-        setAuth(authInstance);
-        setRecaptchaVerifier(verifier);
-        setInitializationStatus("success");
-      } catch (error) {
-        console.error("초기화 실패:", error);
-        setInitializationStatus("error");
+  // Firebase 초기화 함수
+  const initFirebase = async () => {
+    try {
+      // Firebase 초기화
+      const { auth } = initializeFirebase();
+      
+      if (!auth) {
+        console.error("❌ Firebase 인증이 초기화되지 않았습니다.");
+        setErrorMessage("Firebase 인증 초기화에 실패했습니다.");
+        return false;
       }
+      
+      console.log("✅ Firebase 인증 초기화 성공");
+      return true;
+    } catch (error) {
+      console.error("❌ Firebase 초기화 오류:", error);
+      setErrorMessage("인증 시스템 초기화에 실패했습니다.");
+      return false;
+    }
+  };
+
+  // 컴포넌트 마운트 시 Firebase 초기화
+  useEffect(() => {
+    const initialize = async () => {
+      const success = await initFirebase();
+      setFirebaseInitialized(success);
     };
-
+    
     initialize();
-
+    
+    // 컴포넌트 언마운트 시 reCAPTCHA 정리
     return () => {
-      isMounted = false;
-      if (recaptchaVerifier) {
+      if (recaptchaVerifierRef.current) {
         try {
-          recaptchaVerifier.clear();
-        } catch (error) {
-          console.warn("reCAPTCHA cleanup error:", error);
+          recaptchaVerifierRef.current.clear();
+          recaptchaVerifierRef.current = null;
+        } catch (e) {
+          console.warn("⚠️ reCAPTCHA 정리 중 오류:", e);
         }
       }
     };
@@ -67,63 +71,203 @@ const Membership = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // 전화번호 포맷 - 국제 형식으로 변환
   const formatPhoneNumber = () => {
     const { phone1, phone2, phone3 } = formData;
-    const formattedPhone = phone1.startsWith("0") 
-      ? `+82${phone1.slice(1)}${phone2}${phone3}`
-      : `+82${phone1}${phone2}${phone3}`;
-    return formattedPhone;
+    // 010인 경우 첫 0을 제거하고 한국 국가 코드 +82 추가
+    return `+82${phone1.replace(/^0+/, '')}${phone2}${phone3}`;
+  };
+
+  // reCAPTCHA 초기화 함수 (별도로 분리)
+  const setupRecaptcha = async () => {
+    try {
+      const auth = getFirebaseAuth();
+      if (!auth) {
+        throw new Error("Firebase 인증이 초기화되지 않았습니다.");
+      }
+      
+      // 기존 reCAPTCHA가 있으면 정리
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch (e) {
+          console.warn("⚠️ 기존 reCAPTCHA 정리 중 오류:", e);
+        }
+        recaptchaVerifierRef.current = null;
+      }
+      
+      // 새로운 div 요소 생성 및 추가 (DOM 직접 조작)
+      const recaptchaContainer = document.getElementById("recaptcha-container");
+      if (recaptchaContainer) {
+        // 기존 내용 비우기
+        recaptchaContainer.innerHTML = "";
+        
+        // 새 div 생성 및 추가
+        const newDiv = document.createElement("div");
+        newDiv.id = "recaptcha-verifier-container";
+        recaptchaContainer.appendChild(newDiv);
+        
+        // 새 RecaptchaVerifier 생성
+        recaptchaVerifierRef.current = new RecaptchaVerifier(
+          "recaptcha-verifier-container",
+          {
+            size: "invisible",
+            callback: () => console.log("✅ reCAPTCHA verified"),
+            "expired-callback": () => console.warn("⚠️ reCAPTCHA expired"),
+          },
+          auth
+        );
+        
+        // reCAPTCHA 렌더링 완료를 기다림
+        await recaptchaVerifierRef.current.render();
+        console.log("✅ reCAPTCHA 렌더링 완료");
+        return true;
+      } else {
+        throw new Error("reCAPTCHA 컨테이너를 찾을 수 없습니다.");
+      }
+    } catch (error) {
+      console.error("❌ reCAPTCHA 초기화 오류:", error);
+      setErrorMessage(`reCAPTCHA 초기화 실패: ${error.message}`);
+      return false;
+    }
   };
 
   const handleSendCode = async () => {
-    if (initializationStatus !== "success") {
-      alert("인증 시스템이 준비되지 않았습니다.");
-      return;
-    }
-
-    if (!auth || !recaptchaVerifier) {
-      alert("인증 정보가 누락되었습니다.");
-      return;
-    }
-
     setIsLoading(true);
-
+    setErrorMessage("");
+    
     try {
+      // Firebase가 초기화되었는지 확인
+      if (!firebaseInitialized) {
+        const success = await initFirebase();
+        if (!success) {
+          throw new Error("Firebase 초기화에 실패했습니다.");
+        }
+      }
+      
+      const auth = getFirebaseAuth();
+      if (!auth) {
+        throw new Error("인증 시스템이 준비되지 않았습니다.");
+      }
+      
+      // 전화번호 검증
+      const { phone1, phone2, phone3 } = formData;
+      if (!phone1 || !phone2 || !phone3) {
+        throw new Error("전화번호를 모두 입력해주세요.");
+      }
+      
+      if (phone1.length < 2 || phone2.length < 3 || phone3.length < 4) {
+        throw new Error("올바른 전화번호 형식이 아닙니다.");
+      }
+      
+      // reCAPTCHA 설정
+      const recaptchaSuccess = await setupRecaptcha();
+      if (!recaptchaSuccess) {
+        throw new Error("보안 인증(reCAPTCHA) 초기화에 실패했습니다.");
+      }
+      
       const phoneNumber = formatPhoneNumber();
-      const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
-      setConfirmation(confirmationResult);
-      alert("✅ 인증번호가 전송되었습니다");
+      console.log("📱 인증번호 전송 시도:", phoneNumber);
+      
+      // signInWithPhoneNumber 호출
+      if (!recaptchaVerifierRef.current) {
+        console.error("❌ recaptchaVerifierRef.current가 null입니다.");
+        throw new Error("reCAPTCHA가 제대로 초기화되지 않았습니다. 새로고침 후 다시 시도해주세요.");
+      }
+      
+      console.log("📤 인증 요청 준비됨", {
+        authReady: !!auth,
+        verifierReady: !!recaptchaVerifierRef.current,
+        appCheckStatus: process.env.REACT_APP_DISABLE_APPCHECK === 'true' ? '비활성화됨' : '활성화됨',
+        phoneNumber,
+      });
+      
+      try {
+        // Firebase 전화번호 인증 요청
+        const confirmationResult = await signInWithPhoneNumber(
+          auth,
+          phoneNumber,
+          recaptchaVerifierRef.current
+        );
+        
+        console.log("✅ Firebase 인증 응답 성공", confirmationResult);
+        
+        if (confirmationResult) {
+          setConfirmation(confirmationResult);
+          alert("✅ 인증번호가 전송되었습니다.");
+        } else {
+          throw new Error("인증 요청 실패: 응답이 없습니다.");
+        }
+      } catch (phoneError) {
+        console.error("❌ 전화번호 인증 오류:", phoneError);
+        
+        // 전화번호 형식 문제
+        if (phoneError.code === 'auth/invalid-phone-number') {
+          throw new Error("유효하지 않은 전화번호 형식입니다. 국가 코드를 포함한 전체 번호를 확인해주세요.");
+        }
+        
+        // 기타 인증 오류
+        throw new Error(`전화번호 인증 실패: ${phoneError.message || "알 수 없는 오류"}`);
+      }
     } catch (error) {
       console.error("❌ 인증번호 전송 실패:", error);
-      alert("❌ 인증번호 전송 실패: " + (error.message || "알 수 없는 오류"));
+      
+      // Firebase 오류 코드에 따른 구체적인 메시지
+      if (error.code === 'auth/too-many-requests') {
+        setErrorMessage("너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.");
+      } else if (error.code === 'auth/quota-exceeded') {
+        setErrorMessage("인증 서비스 할당량이 초과되었습니다. 나중에 다시 시도해주세요.");
+      } else if (error.code === 'auth/captcha-check-failed') {
+        setErrorMessage("보안 인증에 실패했습니다. 페이지를 새로고침 해주세요.");
+      } else if (error.code === 'auth/app-check-token-error' || error.code === 'auth/app-check-error') {
+        setErrorMessage("앱 보안 인증에 문제가 발생했습니다. 관리자에게 문의하세요.");
+      } else {
+        setErrorMessage(`인증 실패: ${error?.message || "알 수 없는 오류"}`);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleVerifyCode = async () => {
-    if (!confirmation || !verificationCode.trim()) {
-      alert("인증번호를 입력해주세요.");
+    if (!confirmation) {
+      setErrorMessage("인증번호를 먼저 전송해주세요.");
+      return;
+    }
+
+    if (!verificationCode.trim()) {
+      setErrorMessage("인증번호를 입력해주세요.");
       return;
     }
 
     setIsLoading(true);
+    setErrorMessage("");
 
     try {
       const result = await confirmation.confirm(verificationCode);
       if (result?.user) {
         setFirebaseUser(result.user);
         setVerifySuccess(true);
-        alert("✅ 휴대폰 인증에 성공했습니다.");
+        setErrorMessage("");
+        alert("✅ 휴대폰 인증 성공");
       } else {
-        throw new Error("사용자 정보를 받지 못했습니다");
+        throw new Error("인증에 실패했습니다. 사용자 정보를 찾을 수 없습니다.");
       }
     } catch (error) {
-      console.error("❌ Verification failed:", error);
-      alert(`❌ 인증 실패: ${error.message}`);
+      console.error("❌ 인증 실패:", error);
+      
+      // 인증 코드 오류 처리
+      if (error.code === 'auth/invalid-verification-code') {
+        setErrorMessage("인증번호가 올바르지 않습니다. 다시 확인해주세요.");
+      } else if (error.code === 'auth/code-expired') {
+        setErrorMessage("인증번호가 만료되었습니다. 다시 전송해주세요.");
+        setConfirmation(null);
+      } else {
+        setErrorMessage(`인증 실패: ${error?.message || "알 수 없는 오류"}`);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -131,17 +275,24 @@ const Membership = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
+    // 비밀번호 확인
+    if (formData.password !== formData.confirmPassword) {
+      setErrorMessage("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+    
     if (!verifySuccess || !firebaseUser) {
-      alert("❌ 휴대폰 인증을 먼저 완료해주세요.");
+      setErrorMessage("휴대폰 인증을 먼저 완료해주세요.");
       return;
     }
 
     const fullPhone = `${formData.phone1}-${formData.phone2}-${formData.phone3}`;
     setIsLoading(true);
+    setErrorMessage("");
 
     try {
-      const mariaRes = await axios.post("https://react-server-wmqa.onrender.com/api/auth/register", {
+      const res = await axios.post("https://react-server-wmqa.onrender.com/api/auth/register", {
         username: formData.username,
         name: formData.name,
         password: formData.password,
@@ -149,15 +300,20 @@ const Membership = () => {
         firebase_uid: firebaseUser.uid,
       });
 
-      if (mariaRes.data?.message === "회원가입 성공") {
+      if (res.data?.message === "회원가입 성공") {
         alert("🎉 회원가입이 완료되었습니다!");
         window.location.href = "/";
       } else {
-        alert(`❌ 회원가입 실패: ${mariaRes.data?.message || "알 수 없는 오류"}`);
+        setErrorMessage(`회원가입 실패: ${res.data?.message || "알 수 없는 오류"}`);
       }
     } catch (error) {
-      console.error("❌ Registration error:", error);
-      alert(`❌ 서버 오류: ${error.message}`);
+      console.error("❌ 회원가입 오류:", error);
+      
+      if (error.response?.data?.message) {
+        setErrorMessage(`서버 오류: ${error.response.data.message}`);
+      } else {
+        setErrorMessage(`서버 오류: ${error.message || "알 수 없는 오류"}`);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -253,7 +409,6 @@ const Membership = () => {
             onClick={handleSendCode}
             disabled={
               isLoading || 
-              initializationStatus !== "success" || 
               !formData.phone1 || 
               !formData.phone2 || 
               !formData.phone3 ||
@@ -309,8 +464,8 @@ const Membership = () => {
         </div>
       </form>
 
-      {/* reCAPTCHA container */}
-      <div id="recaptcha-container"></div>
+      {/* reCAPTCHA container - 항상 존재해야 함 */}
+      <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
     </div>
   );
 };

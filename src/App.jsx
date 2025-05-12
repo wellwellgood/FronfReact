@@ -13,6 +13,10 @@ import Id from './ID.js';
 import Password from './password.js';
 import LinkPage from './membership.js';
 
+window.addEventListener("unhandledrejection", (event) => {
+  console.error("🔥 전역 promise 에러 발생:", event.reason);
+});
+
 function App() {
   return (
     <HashRouter>

@@ -1,6 +1,5 @@
 // ✅ Firebase 연동된 password.js (비밀번호 찾기)
 import React, { useState, useEffect } from "react";
-import { getFirebaseAuth } from "./firebase";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import axios from "axios";
 import styles from "./serverF/chatServer/css/password.module.css";
