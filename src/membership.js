@@ -35,7 +35,7 @@ const Membership = () => {
 
     try {
       const res = await axios.post(
-        "https://react-server-wmqa.onrender.com/api/auth/register", data,
+        "https://react-server-wmqa.onrender.com/api/auth/register",
         {
           withCredentials: true,
           username: formData.username,
