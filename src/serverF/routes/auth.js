@@ -3,6 +3,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const pool = require("../DB.js");
+const conn = await pool.getConnection();
 
 const router = express.Router();
 
@@ -155,6 +156,8 @@ router.post("/logout", (req, res) => {
   res.clearCookie("refreshToken");
   res.status(200).json({ message: "로그아웃 성공" });
 });
+
+conn.release();
 
 
 module.exports = router;
