@@ -5,11 +5,12 @@ const allowedOrigins = [
   "https://myappboard.netlify.app",
   "http://localhost:3000",
   "http://localhost:4000",
-  "https://react-server-wmqa.onrender.com/"
+  "https://react-server-wmqa.onrender.com"
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
+    console.log("🛰️ 요청 origin:", origin); // 추가
     const cleanOrigin = origin?.replace(/\/$/, '');
     if (!origin || allowedOrigins.includes(cleanOrigin)) {
       callback(null, true);
@@ -21,4 +22,7 @@ const corsOptions = {
   credentials: true,
 };
 
-module.exports = cors(corsOptions);
+module.exports = cors({
+  origin: true, // origin: "*" 이 아님. 이건 credentials와 같이 쓸 수 있음
+  credentials: true,
+});

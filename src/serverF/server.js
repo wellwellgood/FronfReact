@@ -7,7 +7,6 @@ const authRoutes = require("./routes/auth.js");
 const messageRoutes = require("./routes/message.js");
 const uploadRoutes = require("./routes/uploadRouter.js");
 const chatRoutes = require("./chatLog/logs.js"); // (채팅 로그용 API)
-const sendCodeRoute = require("./coolSMS.js");
 const socket = require("./socket.js"); // 소켓 파일 불러오기
 
 const app = express();
@@ -24,7 +23,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/chat", chatRoutes); // (채팅 로그 API)
-app.use("/api/send-code", sendCodeRoute);
 
 // ✅ 서버 상태 확인
 app.get("/", (req, res) => {
@@ -33,6 +31,9 @@ app.get("/", (req, res) => {
 
 // ✅ 소켓 서버 연결
 socket(server);
+
+
+console.log("🔥 회원가입 요청 도착!!!!");
 
 // ✅ 서버 시작
 server.listen(PORT, () => {
