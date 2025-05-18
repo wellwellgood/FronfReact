@@ -3,6 +3,8 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const pool = require("../DB.js");
+const db = require('../DB');
+
 
 const router = express.Router();
 
@@ -21,6 +23,20 @@ const generateRefreshToken = (user) => {
     { expiresIn: "7d" }
   );
 };
+
+router.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const conn = await db.getConnection();
+    const rows = await conn.query("SELECT * FROM users WHERE username = ?", [username]);
+    conn.release();
+
+    // 비밀번호 비교 후 로그인 처리
+  } catch (err) {
+    console.error("❌ 로그인 오류:", err);
+    res.status(500).json({ error: "서버 내부 오류" });
+  }
+});
 
 // ✅ 회원가입
 router.post("/register", async (req, res) => {
