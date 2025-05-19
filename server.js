@@ -9,6 +9,7 @@ const uploadRoutes = require("./routes/uploadRouter.js");
 const chatRoutes = require("./chatLog/logs.js"); // (채팅 로그용 API)
 const sendCodeRoute = require("./coolSMS.js");
 const socket = require("./socket.js"); // 소켓 파일 불러오기
+const initDB = require("./initDB");
 
 const app = express();
 const server = http.createServer(app);
@@ -35,6 +36,7 @@ app.get("/", (req, res) => {
 socket(server);
 
 // ✅ 서버 시작
-server.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 서버 실행 중: http://localhost:${PORT}`);
+  await initDB(); // 🚨 여기서 DB 테이블 자동 생성
 });

@@ -1,5 +1,5 @@
 // initDB.js
-const pool = require("./DB"); // DB 연결 정보는 DB.js에 있어야 함
+const pool = require("./DB");
 
 const initDB = async () => {
   let conn;
@@ -15,7 +15,7 @@ const initDB = async () => {
         phone1 VARCHAR(10),
         phone2 VARCHAR(10),
         phone3 VARCHAR(10)
-      )
+      );
     `;
 
     await conn.query(sql);
