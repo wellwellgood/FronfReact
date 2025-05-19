@@ -62,7 +62,13 @@ const Membership = () => {
         setErrorMessage(res.data?.message || "회원가입 실패");
       }
     } catch (error) {
-      console.error("❌ 회원가입 오류:", error?.response || error.message || error);
+      console.error("❌ 회원가입 오류:", {
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        data: error?.response?.data,
+        message: error?.message,
+        fullError: error
+      });
       setErrorMessage("서버 오류: " + (error?.response?.data?.message || error.message));
     } finally {
       console.log("🔥 finally 도착함");
