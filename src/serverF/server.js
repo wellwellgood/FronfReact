@@ -4,6 +4,7 @@ const express = require("express");
 const http = require("http");
 const path = require("path");
 const corsMiddleware = require("./middlewares/cors.js");
+const initDB = require("./initDB.js");
 
 const authRoutes = require("./routes/auth.js");
 const messageRoutes = require("./routes/message.js");
@@ -33,6 +34,9 @@ app.get("/", (req, res) => {
 
 // ✅ 소켓 서버 연결
 socket(server);
+
+// 테이블 생성 실행
+initDB();
 
 // ✅ 서버 시작
 server.listen(PORT, () => {

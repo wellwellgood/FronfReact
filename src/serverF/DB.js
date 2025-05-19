@@ -1,6 +1,5 @@
-// DB.js
-const mariadb = require('mariadb');
-require('dotenv').config();
+const mariadb = require("mariadb");
+require("dotenv").config();
 
 const pool = mariadb.createPool({
   host: process.env.DB_HOST,
