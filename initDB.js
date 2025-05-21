@@ -3,7 +3,7 @@ const pool = require("./DB");
 
 const initDB = async () => {
   try {
-    const client = await pool.connect();
+    const client = await pool.getConnection();
 
     const createTableQuery = `
       CREATE TABLE IF NOT EXISTS users (
@@ -23,6 +23,10 @@ const initDB = async () => {
     client.release();
   } catch (err) {
     console.error("❌ DB 초기화 실패:", err);
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 };
 
