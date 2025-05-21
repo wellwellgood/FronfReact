@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import emailjs from "@emailjs/browser";
+import styles from "./section4.module.css";
 
 export default function Section4SendEmail() {
   const navigate = useNavigate();

@@ -26,7 +26,8 @@ const Section2 = ({ username, name }) => {
   }, []);
 
   useEffect(() => {
-    axios.get("${API}/api/users").then((res) => {
+    axios.get(`${API}/api/users`).then((res) => {
+      console.log("유저 응답 데이터:", res.data); // 여기를 먼저 확인
       const userList = Array.isArray(res.data) ? res.data : [];
       setUsers(userList.filter((u) => u.username !== username));
     });
