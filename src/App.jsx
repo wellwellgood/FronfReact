@@ -4,9 +4,9 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 import LoginPage from './LoginApp.js';
 import Main from './main';
 // import Example from './components/section1/section1';
-import ChatApp from './components/Chat/section2.js';
+import Section2 from './components/Chat/section2.js';
 import File from './components/File/section3';
-import SendEmail from './components/email/section4';
+import Section4SendEmail from './components/email/section4.js';
 import CustomCalendar from './calender/calender';
 
 import Id from './ID.js';
@@ -24,9 +24,9 @@ function App() {
         <Route path="/" element={<LoginPage />} />
         <Route path="/main" element={<Main />} />
         {/* <Route path="/example" element={<Example />} /> */}
-        <Route path="/ChatApp" element={<ChatApp />} />
+        <Route path="/ChatApp" element={<Section2 />} />
         <Route path="/file" element={<File />} />
-        <Route path="/sendEmail" element={<SendEmail />} />
+        <Route path="/sendEmail" element={<Section4SendEmail />} />
         <Route path="/customCalendar" element={<CustomCalendar />} />
         <Route path="/membership" element={<LinkPage />} />
         <Route path="/Id" element={<Id />} />
