@@ -19,7 +19,7 @@ const Pool = new Pool({
 async function testConnection() {
   let conn;
   try {
-    conn = await pool.getConnection();
+    conn = await Pool.getConnection();
     console.log('✅ 데이터베이스 연결 성공!');
     console.log(`- 호스트: ${process.env.MYSQLHOST || process.env.DB_HOST || 'mysql.railway.internal'}`);
     console.log(`- 데이터베이스: ${process.env.MYSQLDATABASE || process.env.DB_NAME || 'railway'}`);
