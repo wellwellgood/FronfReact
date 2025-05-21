@@ -3,7 +3,7 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 // Railway의 MySQL 환경 변수를 사용
-const pool = mariadb.createPool({
+const Pool = new Pool({
   host: process.env.MYSQLHOST || process.env.DB_HOST || 'mysql.railway.internal',
   port: process.env.MYSQLPORT || process.env.DB_PORT || '3306',
   user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
