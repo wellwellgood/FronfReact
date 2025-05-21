@@ -1,10 +1,10 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const pool = require("../DB.js").default;
-
+const pool = require("../DB").default; // default export된 pool
 const router = express.Router();
 
+// ✅ 토큰 생성 함수
 const generateAccessToken = (user) => {
   return jwt.sign(
     { id: user.id, username: user.username, name: user.name },
@@ -21,36 +21,37 @@ const generateRefreshToken = (user) => {
   );
 };
 
-// ✅ 회원가입 → 사실상 로그인 처리 구조
+// ✅ 회원가입
 router.post("/register", async (req, res) => {
-  const { username, password } = req.body;
-  let conn;
+  const { username, password, name, phone1, phone2, phone3 } = req.body;
+  const phone = `${phone1}-${phone2}-${phone3}`;
 
+  let conn;
   try {
     conn = await pool.connect();
-    const result = await conn.query(
+
+    const check = await conn.query(
       "SELECT * FROM users WHERE username = $1",
       [username]
     );
-    const user = result.rows[0];
+    if (check.rows.length > 0) {
+      return res.status(409).json({ message: "이미 존재하는 아이디입니다." });
+    }
 
-    if (!user)
-      return res.status(401).json({ message: "아이디가 존재하지 않습니다." });
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const match = await bcrypt.compare(password, user.password);
-    if (!match)
-      return res.status(401).json({ message: "비밀번호가 일치하지 않습니다." });
-
-    const token = jwt.sign(
-      { id: user.id, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+    const result = await conn.query(
+      `INSERT INTO users (username, password, name, phone)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id`,
+      [username, hashedPassword, name, phone]
     );
 
-    res.status(200).json({ message: "로그인 성공", token });
+    res.status(201).json({ message: "회원가입 성공", userId: result.rows[0].id });
+
   } catch (err) {
-    console.error("❌ register 오류:", err);
-    res.status(500).json({ message: "서버 오류 발생" });
+    console.error("❌ register 오류:", err.message);
+    res.status(500).json({ message: "서버 오류" });
   } finally {
     if (conn) conn.release();
   }
@@ -71,12 +72,12 @@ router.post("/login", async (req, res) => {
     );
 
     if (result.rows.length === 0)
-      return res.status(401).json({ message: "유저 없음" });
+      return res.status(401).json({ message: "아이디가 존재하지 않습니다." });
 
     const user = result.rows[0];
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
-      return res.status(401).json({ message: "비밀번호 틀림" });
+      return res.status(401).json({ message: "비밀번호가 일치하지 않습니다." });
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
@@ -90,7 +91,7 @@ router.post("/login", async (req, res) => {
 
     res.status(200).json({ message: "로그인 성공", accessToken });
   } catch (err) {
-    console.error("❌ login 오류:", err);
+    console.error("❌ login 오류:", err.message);
     res.status(500).json({ message: "서버 오류" });
   } finally {
     if (conn) conn.release();
@@ -100,9 +101,6 @@ router.post("/login", async (req, res) => {
 // ✅ 아이디 찾기
 router.post("/find-id", async (req, res) => {
   const { name, phone1, phone2, phone3 } = req.body;
-  if (!name || !phone1 || !phone2 || !phone3) {
-    return res.status(400).json({ message: "모든 정보를 입력해주세요." });
-  }
   const phone = `${phone1}-${phone2}-${phone3}`;
 
   let conn;
@@ -116,13 +114,15 @@ router.post("/find-id", async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "일치하는 사용자가 없습니다." });
     }
-    return res.status(200).json({
+
+    res.status(200).json({
       message: "아이디 찾기 성공",
       username: result.rows[0].username,
     });
+
   } catch (err) {
-    console.error("❌ 아이디 찾기 오류:", err);
-    return res.status(500).json({ message: "서버 오류" });
+    console.error("❌ find-id 오류:", err.message);
+    res.status(500).json({ message: "서버 오류" });
   } finally {
     if (conn) conn.release();
   }
@@ -131,9 +131,6 @@ router.post("/find-id", async (req, res) => {
 // ✅ 비밀번호 찾기
 router.post("/find-password", async (req, res) => {
   const { username, name, phone1, phone2, phone3 } = req.body;
-  if (!username || !name || !phone1 || !phone2 || !phone3) {
-    return res.status(400).json({ message: "모든 정보를 입력해주세요." });
-  }
   const phone = `${phone1}-${phone2}-${phone3}`;
 
   let conn;
@@ -149,10 +146,11 @@ router.post("/find-password", async (req, res) => {
     }
 
     const token = generateAccessToken(result.rows[0]);
-    return res.status(200).json({ message: "비밀번호 확인 성공", token });
+    res.status(200).json({ message: "비밀번호 찾기 성공", token });
+
   } catch (err) {
-    console.error("❌ 비밀번호 찾기 오류:", err);
-    return res.status(500).json({ message: "서버 오류" });
+    console.error("❌ find-password 오류:", err.message);
+    res.status(500).json({ message: "서버 오류" });
   } finally {
     if (conn) conn.release();
   }
@@ -182,7 +180,7 @@ router.post("/token", async (req, res) => {
       const newAccessToken = generateAccessToken(result.rows[0]);
       res.status(200).json({ accessToken: newAccessToken });
     } catch (err) {
-      console.error("❌ 토큰 재발급 오류:", err);
+      console.error("❌ 토큰 재발급 오류:", err.message);
       res.status(500).json({ message: "토큰 재발급 실패" });
     } finally {
       if (conn) conn.release();
