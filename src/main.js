@@ -37,6 +37,19 @@ function Main({ onLogout }) {
     navigate("/");
   };
 
+  const [user, setUser] = useState({
+    profile_image: ""
+  });
+  
+  useEffect(() => {
+    const profile_image = sessionStorage.getItem("profileImage");
+    if (!username) return;
+  
+    axios.get(`/api/users/${username}`)  // 예: /api/users/goodwell
+      .then((res) => setUser(res.data))
+      .catch((err) => console.error("유저 정보 가져오기 실패:", err));
+  }, []);
+
   return (
     <div className={styles.body}>
       <nav>

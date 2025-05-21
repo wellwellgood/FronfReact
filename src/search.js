@@ -94,7 +94,7 @@ const Search = ({
       <div className={styles.userInfoBox}>
         <img
           className={styles.profileImage}
-          src={user.profile_image ? `http://서버주소${user.profile_image}` : "/default.jpg"}
+          src={user.profile_image ? `https://react-server-wmqa.onrender.com/user/profile_image` : "/default.jpg"}
           alt="프로필"
         />
         </div>
