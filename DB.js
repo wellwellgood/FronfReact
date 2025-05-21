@@ -13,4 +13,24 @@ const pool = new Pool({
   idleTimeoutMillis: 60000,
 });
 
-module.exports = pool;
+// ✅ 연결 확인용 함수
+async function testConnection() {
+  let client;
+  try {
+    client = await pool.connect();
+    await client.query("SELECT NOW()");
+    console.log("✅ DB 연결 성공");
+    return true;
+  } catch (err) {
+    console.error("❌ DB 연결 실패:", err.message);
+    return false;
+  } finally {
+    if (client) client.release();
+  }
+}
+
+// ✅ 필요한 것들 내보내기
+module.exports = {
+  testConnection,
+  default: pool,
+};
