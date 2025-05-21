@@ -1,4 +1,3 @@
-// ✅ routes/auth.js - MariaDB + JWT 통합버전 (회원가입, 로그인, 아이디/비번 찾기)
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -22,22 +21,31 @@ const generateRefreshToken = (user) => {
   );
 };
 
-// ✅ 회원가입 (비번 비교용이지만 구조상 로그인 처리에 가까움)
+// ✅ 회원가입 → 사실상 로그인 처리 구조
 router.post("/register", async (req, res) => {
   const { username, password } = req.body;
   let conn;
 
   try {
-    conn = await pool.getConnection();
-    const rows = await conn.query("SELECT * FROM `user` WHERE username = ?", [username]);
-    const user = rows[0];
+    conn = await pool.connect();
+    const result = await conn.query(
+      "SELECT * FROM users WHERE username = $1",
+      [username]
+    );
+    const user = result.rows[0];
 
-    if (!user) return res.status(401).json({ message: "아이디가 존재하지 않습니다." });
+    if (!user)
+      return res.status(401).json({ message: "아이디가 존재하지 않습니다." });
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ message: "비밀번호가 일치하지 않습니다." });
+    if (!match)
+      return res.status(401).json({ message: "비밀번호가 일치하지 않습니다." });
 
-    const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    const token = jwt.sign(
+      { id: user.id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
 
     res.status(200).json({ message: "로그인 성공", token });
   } catch (err) {
@@ -51,18 +59,24 @@ router.post("/register", async (req, res) => {
 // ✅ 로그인
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password) return res.status(400).json({ message: "입력 누락" });
+  if (!username || !password)
+    return res.status(400).json({ message: "입력 누락" });
 
   let conn;
   try {
-    conn = await pool.getConnection();
-    const rows = await conn.query("SELECT * FROM users WHERE username = ?", [username]);
+    conn = await pool.connect();
+    const result = await conn.query(
+      "SELECT * FROM users WHERE username = $1",
+      [username]
+    );
 
-    if (rows.length === 0) return res.status(401).json({ message: "유저 없음" });
+    if (result.rows.length === 0)
+      return res.status(401).json({ message: "유저 없음" });
 
-    const user = rows[0];
+    const user = result.rows[0];
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ message: "비밀번호 틀림" });
+    if (!isMatch)
+      return res.status(401).json({ message: "비밀번호 틀림" });
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
@@ -93,13 +107,19 @@ router.post("/find-id", async (req, res) => {
 
   let conn;
   try {
-    conn = await pool.getConnection();
-    const rows = await conn.query("SELECT username FROM users WHERE name = ? AND phone = ?", [name, phone]);
+    conn = await pool.connect();
+    const result = await conn.query(
+      "SELECT username FROM users WHERE name = $1 AND phone = $2",
+      [name, phone]
+    );
 
-    if (rows.length === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ message: "일치하는 사용자가 없습니다." });
     }
-    return res.status(200).json({ message: "아이디 찾기 성공", username: rows[0].username });
+    return res.status(200).json({
+      message: "아이디 찾기 성공",
+      username: result.rows[0].username,
+    });
   } catch (err) {
     console.error("❌ 아이디 찾기 오류:", err);
     return res.status(500).json({ message: "서버 오류" });
@@ -118,14 +138,17 @@ router.post("/find-password", async (req, res) => {
 
   let conn;
   try {
-    conn = await pool.getConnection();
-    const rows = await conn.query("SELECT * FROM users WHERE username = ? AND name = ? AND phone = ?", [username, name, phone]);
+    conn = await pool.connect();
+    const result = await conn.query(
+      "SELECT * FROM users WHERE username = $1 AND name = $2 AND phone = $3",
+      [username, name, phone]
+    );
 
-    if (rows.length === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ message: "일치하는 계정 정보가 없습니다." });
     }
 
-    const token = generateAccessToken(rows[0]);
+    const token = generateAccessToken(result.rows[0]);
     return res.status(200).json({ message: "비밀번호 확인 성공", token });
   } catch (err) {
     console.error("❌ 비밀번호 찾기 오류:", err);
@@ -138,18 +161,25 @@ router.post("/find-password", async (req, res) => {
 // ✅ 토큰 재발급
 router.post("/token", async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
-  if (!refreshToken) return res.status(401).json({ message: "Refresh Token 없음" });
+  if (!refreshToken)
+    return res.status(401).json({ message: "Refresh Token 없음" });
 
   jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, async (err, decoded) => {
-    if (err) return res.status(403).json({ message: "Refresh Token 유효하지 않음" });
+    if (err)
+      return res.status(403).json({ message: "Refresh Token 유효하지 않음" });
 
     let conn;
     try {
-      conn = await pool.getConnection();
-      const rows = await conn.query("SELECT * FROM users WHERE id = ?", [decoded.id]);
+      conn = await pool.connect();
+      const result = await conn.query(
+        "SELECT * FROM users WHERE id = $1",
+        [decoded.id]
+      );
 
-      if (rows.length === 0) return res.status(404).json({ message: "사용자 없음" });
-      const newAccessToken = generateAccessToken(rows[0]);
+      if (result.rows.length === 0)
+        return res.status(404).json({ message: "사용자 없음" });
+
+      const newAccessToken = generateAccessToken(result.rows[0]);
       res.status(200).json({ accessToken: newAccessToken });
     } catch (err) {
       console.error("❌ 토큰 재발급 오류:", err);
