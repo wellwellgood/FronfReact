@@ -1,5 +1,5 @@
 // DB.js
-const mariadb = require('mariadb');
+const { Pool } = require('pg');
 require('dotenv').config();
 
 // Railway의 MySQL 환경 변수를 사용
