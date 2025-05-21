@@ -4,6 +4,7 @@ const express = require("express");
 const http = require("http");
 const path = require("path");
 const corsMiddleware = require("./middlewares/cors.js");
+const initDB = require("./initDB.js");
 
 const authRoutes = require("./routes/auth.js");
 const messageRoutes = require("./routes/message.js");
@@ -37,4 +38,5 @@ socket(server);
 // ✅ 서버 시작
 server.listen(PORT, () => {
   console.log(`🚀 서버 실행 중: http://localhost:${PORT}`);
+  initDB();
 });
