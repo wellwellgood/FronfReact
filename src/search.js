@@ -91,7 +91,16 @@ const Search = ({
           <button className={styles.logout} onClick={handleLogout}>로그아웃</button>
         </div>
       </div>
+      <div className={styles.userInfoBox}>
+        <img
+          className={styles.profileImage}
+          src={user.profile_image ? `http://서버주소${user.profile_image}` : "/default.jpg"}
+          alt="프로필"
+        />
+        </div>
     </div>
+
+    
   );
 };
 
