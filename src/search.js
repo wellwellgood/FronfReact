@@ -59,37 +59,39 @@ const Search = ({
 
   return (
     <div className={styles.topbar}>
-      <div className={styles.search}>
-        <form onSubmit={handleSearch} className={styles.searchForm}>
-          <input type="text" value={searchText} className={styles.searchbox} onChange={handleSearchChange} placeholder="  Search..." />
-          <button type="submit" className={styles.searchButton}><FaSearch /></button>
-        </form>
-        {showResults && (
-          <div className={styles.searchResults}>
-            {isLoading ? (
-              <div className={styles.loadingIndicator}>검색 중...</div>
-            ) : searchResults.length > 0 ? (
-              <ul className={styles.result}>
-                {searchResults.map((item) => (
-                  <li key={item.id} onClick={() => handleResultClick(item.path)}>
-                    <span className={styles.resultTitle}>{item.title}</span>
-                    <span className={styles.resultCategory}>{item.category}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className={styles.noResults}>검색 결과가 없습니다</p>
-            )}
-          </div>
-        )}
-      </div>
-      <div className={styles.user}>
-        <div className={styles.userbox}>
-          <button className={styles.logout} onClick={handleLogout}>로그아웃</button>
+      <div className={styles.topbarContainer}>
+        <div className={styles.search}>
+          <form onSubmit={handleSearch} className={styles.searchForm}>
+            <input type="text" value={searchText} className={styles.searchbox} onChange={handleSearchChange} placeholder="  Search..." />
+            <button type="submit" className={styles.searchButton}><FaSearch /></button>
+          </form>
+          {showResults && (
+            <div className={styles.searchResults}>
+              {isLoading ? (
+                <div className={styles.loadingIndicator}>검색 중...</div>
+              ) : searchResults.length > 0 ? (
+                <ul className={styles.result}>
+                  {searchResults.map((item) => (
+                    <li key={item.id} onClick={() => handleResultClick(item.path)}>
+                      <span className={styles.resultTitle}>{item.title}</span>
+                      <span className={styles.resultCategory}>{item.category}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className={styles.noResults}>검색 결과가 없습니다</p>
+              )}
+            </div>
+          )}
         </div>
-      </div>
-      <div className={styles.userInfoBox}>
-        <img className={styles.profileImage} src={user.profile_image ? `https://react-server-wmqa.onrender.com${profileImage}` : "/default.jpg"} alt="프로필" />
+        <div className={styles.user}>
+          <div className={styles.userbox}>
+            <button className={styles.logout} onClick={handleLogout}>로그아웃</button>
+          </div>
+        </div>
+        <div className={styles.userInfoBox}>
+          <img className={styles.profileImage} src={user.profile_image ? `https://react-server-wmqa.onrender.com${profileImage}` : "/default.jpg"} alt="프로필" />
+        </div>
       </div>
     </div>
   );
