@@ -37,6 +37,20 @@ const Search = ({
     setSearchText('');
   };
 
+  const [user, setUser] = useState({
+    profile_image: ""
+  });
+  
+  useEffect(() => {
+    const profile_image = sessionStorage.getItem("profileImage");
+    const username = sessionStorage.getItem("username");
+    if (!username) return;
+  
+    axios.get(`/api/users/${username}`)  // 예: /api/users/goodwell
+      .then((res) => setUser(res.data))
+      .catch((err) => console.error("유저 정보 가져오기 실패:", err));
+  }, []);
+
   // 외부 클릭 시 검색 결과 닫기
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -94,7 +108,7 @@ const Search = ({
       <div className={styles.userInfoBox}>
         <img
           className={styles.profileImage}
-          src={user.profile_image ? `https://react-server-wmqa.onrender.com/user/profile_image` : "/default.jpg"}
+          src={user.profile_image ? `https://react-server-wmqa.onrender.com${profile_image}` : "/default.jpg"}
           alt="프로필"
         />
         </div>

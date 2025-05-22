@@ -65,6 +65,7 @@ function LoginPage() {
       const { token } = response.data;
       sessionStorage.setItem("userToken", token);
       sessionStorage.setItem("userId", ID);
+      sessionStorage.setItem("username", ID);
       alert("로그인 성공!");
       navigate("/main");
     } catch (error) {
