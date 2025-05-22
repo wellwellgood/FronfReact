@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link, useLocation, Navigate } from "react-router-dom";
+import { useNavigate, Link, Navigate } from "react-router-dom";
 import CustomCalendar from "./calender/calender";
 import styles from "./main.module.css";
-import Search from "./search"
+import Search from "./search";
 import axios from "axios";
 
 function Main({ onLogout }) {
@@ -14,9 +14,10 @@ function Main({ onLogout }) {
   const [showResults, setShowResults] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState({ profile_image: "" });
+  const [profileImage, setProfileImage] = useState("");
   const navigate = useNavigate();
 
-  // API에서 검색 결과 가져오기
   const fetchSearchData = async (query) => {
     setIsLoading(true);
     try {
@@ -37,15 +38,13 @@ function Main({ onLogout }) {
     navigate("/");
   };
 
-  const [user, setUser] = useState({
-    profile_image: ""
-  });
-  
   useEffect(() => {
-    const profile_image = sessionStorage.getItem("profileImage");
+    const img = sessionStorage.getItem("profileImage");
+    const username = sessionStorage.getItem("username");
     if (!username) return;
-  
-    axios.get(`/api/users/${username}`)  // 예: /api/users/goodwell
+
+    setProfileImage(img);
+    axios.get(`/api/users/${username}`)
       .then((res) => setUser(res.data))
       .catch((err) => console.error("유저 정보 가져오기 실패:", err));
   }, []);
@@ -54,10 +53,7 @@ function Main({ onLogout }) {
     <div className={styles.body}>
       <nav>
         <div className={styles.nav}>
-          <div className={styles.logo1}>
-            <h2>Logo</h2>
-            <span></span>
-          </div>
+          <div className={styles.logo1}><h2>Logo</h2><span></span></div>
           <ul className={styles.navmenu}>
             <li className={styles.homebtn}><button className={styles.button} onClick={() => navigate("/main")}>Home</button></li>
             <li className={styles.infobtn}><button className={styles.button} onClick={() => navigate("/ChatApp")}>Chat</button></li>
@@ -68,7 +64,6 @@ function Main({ onLogout }) {
         </div>
       </nav>
 
-      {/* 검색창 컴포넌트 */}
       <Search
         fetchSearchData={fetchSearchData}
         searchResults={searchResults}
@@ -81,34 +76,10 @@ function Main({ onLogout }) {
       />
 
       <div className={styles.mainboard}>
-        <div className={styles.main}>
-          <div className={styles.title}>
-            <span>MAIN</span>
-            <div className={styles.morebtn}><Link to="/"></Link></div>
-          </div>
-          <div><h1>aaa</h1></div>
-        </div>
-        <div className={styles.info}>
-          <div className={styles.title}>
-            <span>INFO</span>
-            <div className={styles.morebtn}><Link to="/info"></Link></div>
-          </div>
-        </div>
-
-        <div className={styles.empty}>
-          <div className={styles.title}>
-            <span>Calender</span>
-            <div className={styles.morebtn}><Link to="/sendEmail"></Link></div>
-          </div>
-          <CustomCalendar /> 
-        </div>
-
-        <div className={styles.file}>
-          <div className={styles.title}>
-            <span>FILE</span>
-            <div className={styles.morebtn}><Link to="/file"></Link></div>
-          </div>
-        </div>
+        <div className={styles.main}><div className={styles.title}><span>MAIN</span><div className={styles.morebtn}><Link to="/"></Link></div></div><div><h1>aaa</h1></div></div>
+        <div className={styles.info}><div className={styles.title}><span>INFO</span><div className={styles.morebtn}><Link to="/info"></Link></div></div></div>
+        <div className={styles.empty}><div className={styles.title}><span>Calender</span><div className={styles.morebtn}><Link to="/sendEmail"></Link></div></div><CustomCalendar /></div>
+        <div className={styles.file}><div className={styles.title}><span>FILE</span><div className={styles.morebtn}><Link to="/file"></Link></div></div></div>
       </div>
     </div>
   );

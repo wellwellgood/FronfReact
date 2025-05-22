@@ -15,43 +15,21 @@ const Search = ({
   handleLogout
 }) => {
   const navigate = useNavigate();
+  const [user, setUser] = useState({ profile_image: "" });
+  const [profileImage, setProfileImage] = useState("");
 
-  // 입력창 변화 처리
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearchText(value);
-    setShowResults(true);
-  };
-
-  // 검색 실행 함수
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchText.trim() === '') return;
-    fetchSearchData(searchText);
-  };
-
-  // 검색 결과 클릭 시 페이지 이동
-  const handleResultClick = (path) => {
-    navigate(path);
-    setShowResults(false);
-    setSearchText('');
-  };
-
-  const [user, setUser] = useState({
-    profile_image: ""
-  });
-  
   useEffect(() => {
-    const profile_image = sessionStorage.getItem("profileImage");
+    const storedImage = sessionStorage.getItem("profileImage");
     const username = sessionStorage.getItem("username");
     if (!username) return;
-  
-    axios.get(`/api/users/${username}`)  // 예: /api/users/goodwell
+
+    setProfileImage(storedImage);
+
+    axios.get(`/api/users/${username}`)
       .then((res) => setUser(res.data))
       .catch((err) => console.error("유저 정보 가져오기 실패:", err));
   }, []);
 
-  // 외부 클릭 시 검색 결과 닫기
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest(`.${styles.search}`)) {
@@ -59,27 +37,33 @@ const Search = ({
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleSearchChange = (e) => {
+    setSearchText(e.target.value);
+    setShowResults(true);
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchText.trim() === '') return;
+    fetchSearchData(searchText);
+  };
+
+  const handleResultClick = (path) => {
+    navigate(path);
+    setShowResults(false);
+    setSearchText('');
+  };
 
   return (
     <div className={styles.topbar}>
       <div className={styles.search}>
         <form onSubmit={handleSearch} className={styles.searchForm}>
-          <input
-            type="text"
-            value={searchText}
-            className={styles.searchbox}
-            onChange={handleSearchChange}
-            placeholder="  Search..."
-          />
-          <button type="submit" className={styles.searchButton}>
-            <FaSearch />
-          </button>
+          <input type="text" value={searchText} className={styles.searchbox} onChange={handleSearchChange} placeholder="  Search..." />
+          <button type="submit" className={styles.searchButton}><FaSearch /></button>
         </form>
-
         {showResults && (
           <div className={styles.searchResults}>
             {isLoading ? (
@@ -99,22 +83,15 @@ const Search = ({
           </div>
         )}
       </div>
-
       <div className={styles.user}>
         <div className={styles.userbox}>
           <button className={styles.logout} onClick={handleLogout}>로그아웃</button>
         </div>
       </div>
       <div className={styles.userInfoBox}>
-        <img
-          className={styles.profileImage}
-          src={user.profile_image ? `https://react-server-wmqa.onrender.com${profile_image}` : "/default.jpg"}
-          alt="프로필"
-        />
-        </div>
+        <img className={styles.profileImage} src={user.profile_image ? `https://react-server-wmqa.onrender.com${profileImage}` : "/default.jpg"} alt="프로필" />
+      </div>
     </div>
-
-    
   );
 };
 
