@@ -20,6 +20,7 @@ const Search = ({
   const [user, setUser] = useState({ profile_image: "" });
   const [profileImage, setProfileImage] = useState("");
   const [showInfoForm, setShowInfoForm] = useState(false);
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
   const infoRef = useRef();
 
   useEffect(() => {
@@ -42,6 +43,7 @@ const Search = ({
       ) {
         setShowResults(false);
         setShowInfoForm(false);
+        setShowThemeMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -67,14 +69,16 @@ const Search = ({
 
   const toggleTheme = (theme) => {
     setTheme(theme);
+    setShowThemeMenu(false); // 선택 후 닫기
   };
 
   const handleProfileClick = () => {
     setShowInfoForm(prev => !prev);
+    setShowThemeMenu(false);
   };
 
-  const showMenu = () => {
-    setShowMenu(prev  => !prev);
+  const toggleThemeMenu = () => {
+    setShowThemeMenu(prev => !prev);
   };
 
   return (
@@ -126,17 +130,17 @@ const Search = ({
                   Account settings
                 </Link>
               </div>
-          
+
               <div className={styles.menuItem}>
-                <span onClick={toggleMenu}>Theme</span>
-                {showMenu && (
+                <span onClick={toggleThemeMenu} className={styles.link}>Theme</span>
+                {showThemeMenu && (
                   <div className={styles.themeMenu}>
                     <div className={styles.light} onClick={() => toggleTheme("light")}>Light</div>
                     <div className={styles.dark} onClick={() => toggleTheme("dark")}>Dark</div>
                   </div>
                 )}
               </div>
-          
+
               <div className={styles.user}>
                 <div className={styles.userbox}>
                   <button className={styles.logout} onClick={handleLogout}>로그아웃</button>
