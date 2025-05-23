@@ -123,7 +123,7 @@ const Search = ({
             <div className={styles.infoform}>
               <ul>
                 <li className={styles.Account}><Link to="/app/settings"><span>Account settings</span></Link></li>
-                <li className={styles.tneme}>
+                <li className={styles.theme}>
                   <span>Theme</span>
                   
                   {showMenu && (
