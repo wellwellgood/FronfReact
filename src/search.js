@@ -74,7 +74,7 @@ const Search = ({
   };
 
   const showMenu = () => {
-    setshowMenu(prev  => !prev);
+    setShowMenu(prev  => !prev);
   };
 
   return (
@@ -125,6 +125,7 @@ const Search = ({
                 <li><Link to="/app/settings"><span>Account settings</span></Link></li>
                 <li>
                   <span>Theme</span>
+                  
                   {showMenu && (
                     <div className={styles.theme} role="menu">
                       <li className={styles.light} onClick={() => toggleTheme("light")}>Light</li>
