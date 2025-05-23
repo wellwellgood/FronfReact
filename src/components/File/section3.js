@@ -110,7 +110,8 @@ export default function FileUploadPage() {
           </ul>
           {/* <div className={styles.setting}><Link to="/">Setting</Link></div> */}
         </div>
-        <Search
+      </nav>
+      <Search
         setTheme={setTheme}
         fetchSearchData={fetchSearchData}
         searchResults={searchResults}
@@ -121,7 +122,6 @@ export default function FileUploadPage() {
         setShowResults={setShowResults}
         handleLogout={handleLogout}
       />
-      </nav>
       <div className={styles.fileUpload}>
         <h2>파일 업로드 및 다운로드</h2>
         <div className={styles.upload}>
