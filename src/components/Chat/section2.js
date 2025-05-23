@@ -24,6 +24,11 @@ const Section2 = ({ username, name }) => {
   const API = process.env.REACT_APP_API || "http://localhost:4000";
 
   useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
     const newSocket = io(API);
     setSocket(newSocket);
 
