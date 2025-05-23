@@ -127,6 +127,13 @@
   z-index: 100;
   color:#000;
 }
+.infoform span,
+.infoform li,
+.infoform a {
+  color: #000;
+  font-size: 14px;
+  font-weight: bold;
+}
 .Account,.theme{
   color:#000;
   font-size: 14px;
