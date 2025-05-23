@@ -127,6 +127,11 @@
   z-index: 100;
   color:#000;
 }
+.Account,.theme{
+  color:#000;
+  font-size: 14px;
+  font-weight: bold;
+}
 .light,.dark{
   color:#000;
 }
