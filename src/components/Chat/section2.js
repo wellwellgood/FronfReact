@@ -85,7 +85,10 @@ const Section2 = ({ username, name }) => {
     <div className={styles.container}>
       <nav>
         <div className={styles.nav}>
-          <div className={styles.logo1}><h2>Logo</h2><span></span></div>
+          <div className={styles.logo1}>
+            <h2>Logo</h2>
+            <span></span>
+          </div>
           <ul className={styles.navmenu}>
             <li className={styles.homebtn}><button className={styles.button} onClick={() => navigate("/main")}>Home</button></li>
             <li className={styles.infobtn}><button className={styles.button} onClick={() => navigate("/ChatApp")}>Chat</button></li>
