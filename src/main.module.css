@@ -8,7 +8,7 @@
 
 
 /* .body{
-  background: #fff;
+  background: var(--accent-text);
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -24,7 +24,7 @@ button{
   border: 0;
   margin: 0;
   padding: 0;
-  color: #000;
+  color: var(--text-color);
   font-size: 16px;
   z-index: 99;
   background: none;
@@ -41,7 +41,7 @@ nav{
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  background-color: #000;
+  background-color: var(--text-color);
   z-index: 99;
 }
 .nav{
@@ -61,7 +61,7 @@ nav{
   flex-direction: column;
 }
 .logo1 h2{
-  color: #286e56;
+  color: var(--text-color);
   font-size: 36px;
   margin: 10px 0px;
   font-weight: 900;
@@ -69,7 +69,7 @@ nav{
 .logo1 span{
   width: 150px;
   height: 3px;
-  background: #286e56;
+  background: var(--text-color);
   border-radius: 100%;
 }
 ul{
@@ -95,7 +95,7 @@ li a{
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #000;
+  color: var(--text-color);
   text-decoration-line: none;
   font-size: 16px;
   margin: 0;
@@ -172,7 +172,7 @@ li:nth-of-type(4)::before{
   z-index: 9;
 }
 li link{
-  color: #fff;
+  color: var(--accent-text);
 }
 .button{
   background: none;
@@ -182,7 +182,7 @@ li link{
   position: absolute;
   bottom: 50px;
   left: 7px;
-  color: #fff;
+  color: var(--accent-text);
   width: 100%;
   display: flex;
   align-items: center;
@@ -194,7 +194,7 @@ li link{
   100%{transform: rotate(360deg);}
 }
 .setting a{
-  color: #000;
+  color: var(--text-color);
   font-size: 20px;
   z-index: 9;
   text-decoration-line: none;
@@ -238,7 +238,7 @@ li link{
   /* border-radius: 15px; */
   position: relative;
   overflow: hidden;
-  border: 1px solid #80FFDB;
+  border: 1px solid var(--accent-color);
   background: linear-gradient(135deg, rgba(255,255,255, 0.74), rgba(40, 110, 86,0.4));
 }
 .mainboard div .title{
@@ -251,12 +251,12 @@ li link{
   height: 30px;
   top: 0;
   left: 0;
-  border-bottom: 1px solid #fff;
-  background: #55E0A3;
+  border-bottom: 1px solid var(--accent-text);
+  background: var(--accent-color);
   /* border-radius: 10px 10px 0px 0; */
 }
 .mainboard .title span{
-  color: #000;
+  color: var(--text-color);
   width: 50px;
   margin: 0px 0 0 10px;
   height: 15px;
@@ -284,7 +284,7 @@ li link{
   flex-direction: column;
   justify-content: center;
   /* border-radius: 15px; */
-  border: 1px solid #80FFDB;
+  border: 1px solid var(--accent-color);
   background: linear-gradient(135deg, rgba(255,255,255, 0.74),rgba(40, 110, 86,0.4));
 }
 .mainboard .empty{
@@ -293,7 +293,7 @@ li link{
   flex-direction: column;
   justify-content: center;
   /* border-radius: 15px; */
-  border: 1px solid #80FFDB;
+  border: 1px solid var(--accent-color);
   background: linear-gradient(135deg, rgba(255,255,255, 0.74),rgba(40, 110, 86,0.4));
 }
 .CustomCalendar {
