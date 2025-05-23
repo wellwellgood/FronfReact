@@ -5,7 +5,7 @@ import styles from "./main.module.css";
 import Search from "./search";
 import axios from "axios";
 
-function Main({ onLogout }) {
+function Main({ setTheme , onLogout }) {
   const isLogtin = sessionStorage.getItem("isAuthenticated");
   if (isLogtin) return <Navigate to="/" replace />;
 
