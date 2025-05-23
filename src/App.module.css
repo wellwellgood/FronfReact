@@ -1,3 +1,11 @@
+:root[data-theme="light"] {
+  --bg-color:#fff;
+  --text-color: #000;
+}
+:root[data-theme="dark"] {
+  --bg-color:#000;
+  --text-color: #fff;
+}
 * {
   margin: 0;
   padding: 0;

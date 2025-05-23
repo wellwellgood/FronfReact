@@ -60,11 +60,12 @@ function Main({ onLogout }) {
             <li className={styles.filebtn}><button className={styles.button} onClick={() => navigate("/file")}>File</button></li>
             <li className={styles.emailbtn}><button onClick={() => navigate("/sendEmail")}>Email</button></li>
           </ul>
-          <div className={styles.setting}><Link to="/">Setting</Link></div>
+          {/* <div className={styles.setting}><Link to="/">Setting</Link></div> */}
         </div>
       </nav>
 
       <Search
+        setTheme={setTheme}
         fetchSearchData={fetchSearchData}
         searchResults={searchResults}
         isLoading={isLoading}

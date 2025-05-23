@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaSearch } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import styles from './search.module.css';
 
@@ -12,7 +13,8 @@ const Search = ({
   searchText,
   showResults,
   setShowResults,
-  handleLogout
+  handleLogout,
+  setTheme
 }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState({ profile_image: "" });
@@ -57,6 +59,11 @@ const Search = ({
     setSearchText('');
   };
 
+  const toggleTheme = (theme) => {
+    setTheme(theme);
+  }
+
+
   return (
     <div className={styles.topbar}>
       <div className={styles.topbarContainer}>
@@ -84,13 +91,24 @@ const Search = ({
             </div>
           )}
         </div>
-        <div className={styles.user}>
-          <div className={styles.userbox}>
-            <button className={styles.logout} onClick={handleLogout}>로그아웃</button>
-          </div>
-        </div>
         <div className={styles.userInfoBox}>
           <img className={styles.profileImage} src={user.profile_image ? `https://react-server-wmqa.onrender.com${profileImage}` : "/default.jpg"} alt="프로필" />
+          <div className={styles.infoform}>
+            <ul>
+              <li><Link to=" "><span>Account settings</span></Link></li>
+              <li><span>Theme</span>
+                <div className={styles.theme} role="menu">
+                  <li onClick={() => toggleTheme("light")}>Light</li>
+                  <li onClick={() => toggleTheme("dark")}>Dark</li>
+                </div>
+              </li>
+              <div className={styles.user}>
+                <div className={styles.userbox}>
+                  <button className={styles.logout} onClick={handleLogout}>로그아웃</button>
+                </div>
+              </div>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

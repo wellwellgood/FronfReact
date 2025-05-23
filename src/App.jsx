@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 
 import LoginPage from './LoginApp.js';
@@ -18,11 +18,21 @@ window.addEventListener("unhandledrejection", (event) => {
 });
 
 function App() {
+
+  const[theme , setTheme] = useState(() => 
+    localStorage.getItem("theme") || "light"
+  );
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme" , theme);
+    localStorage.setItem("theme" , theme);
+  },[theme]);
+
   return (
     <HashRouter>
       <Routes>
         <Route path="/" element={<LoginPage />} />
-        <Route path="/main" element={<Main />} />
+        <Route path="/main" element={<Main setTheme={setTheme} />} />
         {/* <Route path="/example" element={<Example />} /> */}
         <Route path="/ChatApp" element={<Section2 />} />
         <Route path="/file" element={<File />} />
