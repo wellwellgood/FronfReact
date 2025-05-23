@@ -1,20 +1,21 @@
-:root[data-theme='light'] {
-  --bg-color: #eafcf4;        /* 전체 배경 */
-  --card-bg: #ffffff;          /* 카드 박스 배경 */
-  --text-color: #1a1a1a;       /* 본문 텍스트 */
-  --accent-color: #2fd39e;     /* 버튼, 강조색 (민트) */
-  --accent-text: #ffffff;      /* 버튼 위 텍스트 */
-  --header-bg: #1b4b3d;        /* 상단바 배경 */
-  --header-text: #ffffff;      /* 상단바 텍스트 */
-  --sidebar-bg: #c7f3e7;       /* 사이드바 배경 */
-  --sidebar-icon: #1a1a1a;     /* 아이콘 기본색 */
-  --hover-bg: #c9ede1;         /* hover 배경 */
-  --calendar-bg: #f8f8f8;      /* 달력 배경 */
-  --calendar-text: #000000;    /* 달력 숫자 */
-  --calendar-highlight: #ffc107; /* 달력 하이라이트 (노랑) */
-  --error-text: #d32f2f;       /* 주말 텍스트 (빨강) */
-  --bg-overlay: rgba(225, 247, 236, 0.8);
 
+:root[data-theme='light'] {
+  --bg-color: #eafcf4;
+  --card-bg: #ffffff;
+  --text-color: #1a1a1a;
+  --accent-color: #2fd39e;
+  --accent-text: #ffffff;
+  --header-bg: #1b4b3d;
+  --header-text: #ffffff;
+  --sidebar-bg: #c7f3e7;
+  --sidebar-icon: #1a1a1a;
+  --hover-bg: #c9ede1;
+  --calendar-bg: #f8f8f8;
+  --calendar-text: #000000;
+  --calendar-highlight: #ffc107;
+  --error-text: #d32f2f;
+  --bg-overlay: rgba(225, 247, 236, 0.8);
+  --focus-shadow: rgba(44, 148, 126, 0.3);
 }
 
 :root[data-theme='dark'] {
@@ -33,11 +34,7 @@
   --calendar-highlight: #ffca28;
   --error-text: #ef5350;
   --bg-overlay: rgba(20, 20, 20, 0.6);
-}
-
-.infoform {
-  background-color: var(--info-bg);
-  color: var(--info-text);
+  --focus-shadow: rgba(0, 191, 165, 0.4);
 }
 
 * {
@@ -45,43 +42,11 @@
   padding: 0;
   box-sizing: border-box;
 }
-body{
+
+body {
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.header {
-  background-color: var(--header-bg);
-  color: var(--header-text);
-}
-
-.sidebar {
-  background-color: var(--sidebar-bg);
-  color: var(--sidebar-icon);
-}
-
-.button {
-  background-color: var(--accent-color);
-  color: var(--accent-text);
-}
-
-.card {
-  background-color: var(--card-bg);
-  color: var(--text-color);
-}
-
-.calendar {
-  background-color: var(--calendar-bg);
-  color: var(--calendar-text);
-}
-
-.calendar .highlight {
-  background-color: var(--calendar-highlight);
-}
-
-.calendar .weekend {
-  color: var(--error-text);
 }
 
 .App {
@@ -118,12 +83,13 @@ body{
 }
 
 .login {
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: var(--card-bg);
   padding: 40px 30px;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   width: 400px;
   position: relative;
+  transition: background-color 0.3s ease;
 }
 
 .loginform {
@@ -175,15 +141,15 @@ body{
 
 .id:focus,
 .pw:focus {
-  border-color: #2c947e;
-  background-color: #ffffff;
-  box-shadow: 0 0 0 2px rgba(44, 148, 126, 0.3);
+  border-color: var(--accent-color);
+  background-color: var(--card-bg);
+  box-shadow: 0 0 0 2px var(--focus-shadow);
   outline: none;
 }
 
 .error-message {
   font-size: 14px;
-  color: #dc2626;
+  color: var(--error-text);
   font-weight: bold;
   margin-bottom: 10px;
 }
