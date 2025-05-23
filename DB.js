@@ -11,6 +11,10 @@ const pool = new Pool({
   ssl: process.env.DB_SSL === 'true',
   connectionTimeoutMillis: 30000,
   idleTimeoutMillis: 60000,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 // ✅ 연결 확인용 함수
