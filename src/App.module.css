@@ -11,6 +11,11 @@
   padding: 0;
   box-sizing: border-box;
 }
+body{
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
 
 .App {
   width: 100%;
