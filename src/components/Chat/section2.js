@@ -4,6 +4,7 @@ import { io } from "socket.io-client";
 import axios from "axios";
 import styles from "./section2.module.css";
 import Search from "../../search";
+import { useNavigate } from "react-router-dom";
 
 const Section2 = ({ username, name }) => {
   const [socket, setSocket] = useState(null);
@@ -17,6 +18,7 @@ const Section2 = ({ username, name }) => {
   const [searchText, setSearchText] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const fetchSearchData = () => {};
   const handleLogout = () => {};

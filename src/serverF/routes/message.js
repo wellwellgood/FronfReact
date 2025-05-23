@@ -1,49 +1,45 @@
 // routes/message.js
 const express = require("express");
-const pool = require("../pgPool.js");
+const pool = require("../DB.js");
 
 const router = express.Router();
 
-// 메시지 저장
-router.post("/", async (req, res) => {
-  const { sender_id, receiver_id, content } = req.body;
-  const client = await pool.connect();
-
+// ✅ 모든 메시지 가져오기
+router.get("/", async (req, res) => {
+  let conn;
   try {
-    await client.query(
-      "INSERT INTO messages (sender_id, receiver_id, content, time) VALUES ($1, $2, $3, NOW())",
-      [sender_id, receiver_id, content]
+    conn = await pool.getConnection();
+    const messages = await conn.query("SELECT * FROM messages ORDER BY time ASC");
+    res.json(messages);
+  } catch (err) {
+    console.error("❌ 메시지 불러오기 오류:", err);
+    res.status(500).json({ message: "서버 오류" });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// ✅ 메시지 저장
+router.post("/", async (req, res) => {
+  const { sender_username, receiver_username, sender_name, content } = req.body;
+  if (!sender_username || !receiver_username || !sender_name || !content) {
+    return res.status(400).json({ message: "필수 정보 누락" });
+  }
+
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const time = new Date().toISOString();
+    await conn.query(
+      "INSERT INTO messages (sender_username, receiver_username, sender_name, content, time) VALUES (?, ?, ?, ?, ?)",
+      [sender_username, receiver_username, sender_name, content, time]
     );
     res.status(201).json({ message: "메시지 저장 완료" });
   } catch (err) {
     console.error("❌ 메시지 저장 오류:", err);
     res.status(500).json({ message: "서버 오류" });
   } finally {
-    client.release();
-  }
-});
-
-// 메시지 불러오기
-router.get("/api/messages", async (req, res) => {
-  const client = await pool.connect();
-
-  try {
-    const result = await client.query(`
-      SELECT 
-      m.*, 
-      s.username AS sender_username, 
-      r.username AS receiver_username
-      FROM messages m
-      LEFT JOIN users s ON m.sender_id = s.id
-      LEFT JOIN users r ON m.receiver_id = r.id
-      ORDER BY m.time ASC
-    `);
-    res.status(200).json(result.rows);
-  } catch (err) {
-    console.error("❌ 메시지 불러오기 오류:", err);
-    res.status(500).json({ message: "서버 오류" });
-  } finally {
-    client.release();
+    if (conn) conn.release();
   }
 });
 
