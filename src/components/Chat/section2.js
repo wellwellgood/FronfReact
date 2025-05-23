@@ -67,6 +67,31 @@ const Section2 = ({ username, name }) => {
 
   return (
     <div className={styles.container}>
+      <nav>
+        <div className={styles.nav}>
+          <div className={styles.logo1}><h2>Logo</h2><span></span></div>
+          <ul className={styles.navmenu}>
+            <li className={styles.homebtn}><button className={styles.button} onClick={() => navigate("/main")}>Home</button></li>
+            <li className={styles.infobtn}><button className={styles.button} onClick={() => navigate("/ChatApp")}>Chat</button></li>
+            <li className={styles.filebtn}><button className={styles.button} onClick={() => navigate("/file")}>File</button></li>
+            <li className={styles.emailbtn}><button onClick={() => navigate("/sendEmail")}>Email</button></li>
+          </ul>
+          {/* <div className={styles.setting}><Link to="/">Setting</Link></div> */}
+        </div>
+      </nav>
+
+      <Search
+        setTheme={setTheme}
+        fetchSearchData={fetchSearchData}
+        searchResults={searchResults}
+        isLoading={isLoading}
+        setSearchText={setSearchText}
+        searchText={searchText}
+        showResults={showResults}
+        setShowResults={setShowResults}
+        handleLogout={handleLogout}
+      />
+      
       <div className={styles.userList}>
         <h3>유저 목록</h3>
         {users.map((user) => (
