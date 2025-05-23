@@ -125,14 +125,15 @@
   border-radius: 8px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   z-index: 100;
+  color:#000;
 }
 .light,.dark{
   color:#000;
 }
 
-.light,.dark::after{
+.Account,.theme,.light,.dark::after{
   display: none;
 }
-.light,.dark::before{
+.Account,.theme,.light,.dark::before{
   display: none;
 }

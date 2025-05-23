@@ -122,8 +122,8 @@ const Search = ({
           {showInfoForm && (
             <div className={styles.infoform}>
               <ul>
-                <li><Link to="/app/settings"><span>Account settings</span></Link></li>
-                <li>
+                <li className='Account'><Link to="/app/settings"><span>Account settings</span></Link></li>
+                <li className='theme'>
                   <span>Theme</span>
                   
                   {showMenu && (
