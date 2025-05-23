@@ -73,6 +73,10 @@ const Search = ({
     setShowInfoForm(prev => !prev);
   };
 
+  const showMenu = () => {
+    setshowMenu(prev  => !prev);
+  };
+
   return (
     <div className={styles.topbar}>
       <div className={styles.topbarContainer}>
@@ -121,10 +125,12 @@ const Search = ({
                 <li><Link to="/app/settings"><span>Account settings</span></Link></li>
                 <li>
                   <span>Theme</span>
-                  <div className={styles.theme} role="menu">
-                    <li className={styles.light} onClick={() => toggleTheme("light")}>Light</li>
-                    <li className={styles.dark} onClick={() => toggleTheme("dark")}>Dark</li>
-                  </div>
+                  {showMenu && (
+                    <div className={styles.theme} role="menu">
+                      <li className={styles.light} onClick={() => toggleTheme("light")}>Light</li>
+                      <li className={styles.dark} onClick={() => toggleTheme("dark")}>Dark</li>
+                    </div>
+                  )}
                 </li>
                 <div className={styles.user}>
                   <div className={styles.userbox}>

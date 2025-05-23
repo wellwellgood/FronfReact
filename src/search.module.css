@@ -126,3 +126,13 @@
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   z-index: 100;
 }
+.light,.dark{
+  color:#000;
+}
+
+.light,.dark::after{
+  display: none;
+}
+.light,.dark::before{
+  display: none;
+}

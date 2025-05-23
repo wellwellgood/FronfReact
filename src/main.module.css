@@ -83,7 +83,7 @@ ul{
   gap: 40px;
   margin-top: 20px;
 }
-.homebtn,.infobtn,.filebtn,.emailbtn{
+li{
   text-decoration: none;
   width: 100%;
   display: flex;
@@ -91,7 +91,7 @@ ul{
   justify-content: flex-start;
   gap: 20px;
 }
-.homebtn,.infobtn,.filebtn,.emailbtn a{
+li a{
   display: flex;
   align-items: center;
   justify-content: center;
@@ -104,7 +104,7 @@ ul{
   font-weight: 400;
   font-style: normal;
 }
-.homebtn,.infobtn,.filebtn,.emailbtn::after{
+li::after{
   content: '';
   background: rgba(255,255,255, 1);
   position: absolute;
@@ -123,7 +123,7 @@ li:hover::after{
   /* left: -10px; */
   width: 150px;
 }
-.homebtn::before{
+li:nth-of-type(1)::before{
   content: '';
   background-image: url(image/home_30dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png);
   background-position: center;
@@ -135,7 +135,7 @@ li:hover::after{
   /* margin:0 10px; */
   z-index: 9;
 }
-.infobtn:before{
+li:nth-of-type(2)::before{
   content: '';
   background-image: url(image/comment_30dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png);
   background-position: center;
@@ -147,7 +147,7 @@ li:hover::after{
   /* margin:0 10px; */
   z-index: 9;
 }
-.filebtn::before{
+li:nth-of-type(3)::before{
   content: '';
   background-image: url(image/cloud_upload_30dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png);
   background-position: center;
@@ -159,7 +159,7 @@ li:hover::after{
   /* margin:0 10px; */
   z-index: 9;
 }
-.emailbtn::before{
+li:nth-of-type(4)::before{
   content: '';
   background-image: url(image/outgoing_mail_30dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png);
   background-position: center;
