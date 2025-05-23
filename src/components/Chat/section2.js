@@ -12,6 +12,14 @@ const Section2 = ({ username, name }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const chatBoxRef = useRef(null);
+  const [theme, setTheme] = useState("light");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchText, setSearchText] = useState("");
+  const [showResults, setShowResults] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchSearchData = () => {};
+  const handleLogout = () => {};
 
   const API = process.env.REACT_APP_API || "http://localhost:4000";
 
