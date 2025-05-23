@@ -16,6 +16,8 @@
   --error-text: #d32f2f;
   --bg-overlay: rgba(225, 247, 236, 0.8);
   --focus-shadow: rgba(44, 148, 126, 0.3);
+  --gradient-start: rgba(255, 255, 255, 1);
+  --gradient-end: rgba(128, 255, 219, 1);
 }
 
 :root[data-theme='dark'] {
@@ -35,6 +37,8 @@
   --error-text: #ef5350;
   --bg-overlay: rgba(20, 20, 20, 0.6);
   --focus-shadow: rgba(0, 191, 165, 0.4);
+  --gradient-start: #1e1e1e;
+  --gradient-end: #005f46;
 }
 
 * {
