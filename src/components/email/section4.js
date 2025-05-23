@@ -2,13 +2,21 @@ import React, { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import emailjs from "@emailjs/browser";
 import styles from "./AA/email.js/SendEmail.module.css";
-
+import Search from "../../search";
 export default function Section4SendEmail() {
   const navigate = useNavigate();
   const form = useRef();
   const [text, setText] = useState("");
   const [agree, setAgree] = useState(false);
-
+  const [theme, setTheme] = useState("light");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchText, setSearchText] = useState("");
+  const [showResults, setShowResults] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const fetchSearchData = () => {};
+  const handleLogout = () => {};
+  
+  
   const handleSearchChange = (e) => setText(e.target.value);
 
   const handleCheckboxChange = (e) => {
@@ -59,6 +67,18 @@ export default function Section4SendEmail() {
           <div className={styles.setting}><Link to="/">Setting</Link></div>
         </div>
       </nav>
+      <Search
+        setTheme={setTheme}
+        fetchSearchData={fetchSearchData}
+        searchResults={searchResults}
+        isLoading={isLoading}
+        setSearchText={setSearchText}
+        searchText={searchText}
+        showResults={showResults}
+        setShowResults={setShowResults}
+        handleLogout={handleLogout}
+      />
+      
       <div className={styles.topbar}>
         <div className={styles.search}>
           <input
