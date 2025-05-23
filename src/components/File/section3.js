@@ -122,21 +122,6 @@ export default function FileUploadPage() {
         handleLogout={handleLogout}
       />
       </nav>
-      <div className={styles.topbar}>
-        <div className={styles.search}>
-          <input 
-            type="text"
-            value={text}
-            className={styles.searchbox}
-            onChange={handleChange}
-            placeholder="  Search..."
-          />
-        </div>
-        <div className={styles.user}>
-          <button className={styles.logout} onClick={handleLogout}>로그아웃</button>
-        </div>
-      </div>
-
       <div className={styles.fileUpload}>
         <h2>파일 업로드 및 다운로드</h2>
         <div className={styles.upload}>
