@@ -6,6 +6,7 @@ const path = require("path");
 const corsMiddleware = require("./middlewares/cors.js");
 const initDB = require("./initDB.js");
 const { testConnection } = require("./DB"); // DB 테스트 함수 가져오기
+const userRoutes = require("./routes/user.js");
 
 const authRoutes = require("./routes/auth.js");
 const messageRoutes = require("./routes/message.js");
@@ -42,7 +43,7 @@ app.use(async (req, res, next) => {
 // API 라우트
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
-app.use("/api/users", authRoutes);
+app.use("/api", userRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/chat", chatRoutes);
 
