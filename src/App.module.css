@@ -1,10 +1,16 @@
-:root[data-theme="light"] {
-  --bg-color:#fff;
-  --text-color: #000;
+:root[data-theme='light'] {
+  --info-bg: white;
+  --info-text: #000;
 }
-:root[data-theme="dark"] {
-  --bg-color:#000;
-  --text-color: #fff;
+
+:root[data-theme='dark'] {
+  --info-bg: #222;
+  --info-text: #fff;
+}
+
+.infoform {
+  background-color: var(--info-bg);
+  color: var(--info-text);
 }
 * {
   margin: 0;

@@ -111,10 +111,6 @@
   border-radius: 50%;
 }
 
-.userInfoBox {
-  position: relative;
-}
-
 .infoform {
   position: absolute;
   top: 100%;
@@ -125,27 +121,12 @@
   border-radius: 8px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   z-index: 100;
-  color:#000;
+  color: #000;
 }
-.infoform span,
-.infoform li,
-.infoform a {
+
+.Account, .theme, .light, .dark {
   color: #000;
   font-size: 14px;
   font-weight: bold;
-}
-.Account,.theme{
-  color:#000;
-  font-size: 14px;
-  font-weight: bold;
-}
-.light,.dark{
-  color:#000;
-}
-
-.Account,.theme,.light,.dark::after{
-  display: none;
-}
-.Account,.theme,.light,.dark::before{
-  display: none;
+  cursor: pointer;
 }

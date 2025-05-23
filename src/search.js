@@ -121,24 +121,27 @@ const Search = ({
 
           {showInfoForm && (
             <div className={styles.infoform}>
-              <ul>
-                <li className={styles.Account}><Link to="/app/settings"><span>Account settings</span></Link></li>
-                <li className={styles.theme}>
-                  <span>Theme</span>
-                  
-                  {showMenu && (
-                    <div className={styles.theme} role="menu">
-                      <li className={styles.light} onClick={() => toggleTheme("light")}>Light</li>
-                      <li className={styles.dark} onClick={() => toggleTheme("dark")}>Dark</li>
-                    </div>
-                  )}
-                </li>
-                <div className={styles.user}>
-                  <div className={styles.userbox}>
-                    <button className={styles.logout} onClick={handleLogout}>로그아웃</button>
+              <div className={styles.menuItem}>
+                <Link to="/app/settings" className={styles.link}>
+                  Account settings
+                </Link>
+              </div>
+          
+              <div className={styles.menuItem}>
+                <span onClick={toggleMenu}>Theme</span>
+                {showMenu && (
+                  <div className={styles.themeMenu}>
+                    <div className={styles.light} onClick={() => toggleTheme("light")}>Light</div>
+                    <div className={styles.dark} onClick={() => toggleTheme("dark")}>Dark</div>
                   </div>
+                )}
+              </div>
+          
+              <div className={styles.user}>
+                <div className={styles.userbox}>
+                  <button className={styles.logout} onClick={handleLogout}>로그아웃</button>
                 </div>
-              </ul>
+              </div>
             </div>
           )}
         </div>
