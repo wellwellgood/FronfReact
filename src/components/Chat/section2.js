@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import axios from "axios";
 import styles from "./section2.module.css";
+import Search from "./search";
 
 const Section2 = ({ username, name }) => {
   const [socket, setSocket] = useState(null);
