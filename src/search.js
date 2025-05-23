@@ -142,9 +142,9 @@ const Search = ({
               </div>
 
               <div className={styles.user}>
-                <div className={styles.userbox}>
+                <span className={styles.userbox}>
                   <button className={styles.logout} onClick={handleLogout}>로그아웃</button>
-                </div>
+                </span>
               </div>
             </div>
           )}

@@ -15,7 +15,7 @@ const Section2 = ({ username, name }) => {
   const API = process.env.REACT_APP_API || "http://localhost:4000";
 
   useEffect(() => {
-    const newSocket = io("${API}");
+    const newSocket = io(API);
     setSocket(newSocket);
 
     newSocket.on("message", (msg) => {
@@ -27,11 +27,16 @@ const Section2 = ({ username, name }) => {
 
   useEffect(() => {
     axios.get(`${API}/api/users`).then((res) => {
-      console.log("유저 응답 데이터:", res.data); // 여기를 먼저 확인
+      console.log("유저 응답 데이터:", res.data);
       const userList = Array.isArray(res.data) ? res.data : [];
-      setUsers(userList.filter((u) => u.username !== username));
+      if (userList.length && userList.filter) {
+        setUsers(userList.filter((u) => u.username !== username));
+      } else {
+        console.warn("⚠️ 유저 데이터가 배열이 아님:", userList);
+        setUsers([]);
+      }
     });
-    axios.get("${API}/api/messages").then((res) => {
+    axios.get(`${API}/api/messages`).then((res) => {
       setMessages(res.data);
     });
   }, [username]);
@@ -51,7 +56,7 @@ const Section2 = ({ username, name }) => {
     };
 
     try {
-      await axios.post("${API}/api/messages", msg);
+      axios.post(`${API}/api/messages`, msg)
       socket.emit("message", msg);
       setMessages((prev) => [...prev, { ...msg, time: new Date().toISOString() }]);
       setInput("");

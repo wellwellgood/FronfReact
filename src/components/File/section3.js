@@ -100,8 +100,19 @@ export default function FileUploadPage() {
             <li><button className={styles.button} onClick={gotoLink2}>File</button></li>
             <li><button className={styles.button} onClick={gotoLink3}>Email</button></li>
           </ul>
-          <div className={styles.setting}><Link to="/">Setting</Link></div>
+          {/* <div className={styles.setting}><Link to="/">Setting</Link></div> */}
         </div>
+        <Search
+        setTheme={setTheme}
+        fetchSearchData={fetchSearchData}
+        searchResults={searchResults}
+        isLoading={isLoading}
+        setSearchText={setSearchText}
+        searchText={searchText}
+        showResults={showResults}
+        setShowResults={setShowResults}
+        handleLogout={handleLogout}
+      />
       </nav>
       <div className={styles.topbar}>
         <div className={styles.search}>
