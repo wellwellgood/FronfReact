@@ -1,4 +1,4 @@
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaSearch } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
@@ -19,6 +19,8 @@ const Search = ({
   const navigate = useNavigate();
   const [user, setUser] = useState({ profile_image: "" });
   const [profileImage, setProfileImage] = useState("");
+  const [showInfoForm, setShowInfoForm] = useState(false);
+  const infoRef = useRef();
 
   useEffect(() => {
     const storedImage = sessionStorage.getItem("profileImage");
@@ -34,8 +36,12 @@ const Search = ({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!event.target.closest(`.${styles.search}`)) {
+      if (
+        !event.target.closest(`.${styles.search}`) &&
+        !infoRef.current?.contains(event.target)
+      ) {
         setShowResults(false);
+        setShowInfoForm(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -61,15 +67,24 @@ const Search = ({
 
   const toggleTheme = (theme) => {
     setTheme(theme);
-  }
+  };
 
+  const handleProfileClick = () => {
+    setShowInfoForm(prev => !prev);
+  };
 
   return (
     <div className={styles.topbar}>
       <div className={styles.topbarContainer}>
         <div className={styles.search}>
           <form onSubmit={handleSearch} className={styles.searchForm}>
-            <input type="text" value={searchText} className={styles.searchbox} onChange={handleSearchChange} placeholder="  Search..." />
+            <input
+              type="text"
+              value={searchText}
+              className={styles.searchbox}
+              onChange={handleSearchChange}
+              placeholder="  Search..."
+            />
             <button type="submit" className={styles.searchButton}><FaSearch /></button>
           </form>
           {showResults && (
@@ -91,24 +106,34 @@ const Search = ({
             </div>
           )}
         </div>
-        <div className={styles.userInfoBox}>
-          <img className={styles.profileImage} src={user.profile_image ? `https://react-server-wmqa.onrender.com${profileImage}` : "/default.jpg"} alt="프로필" />
-          <div className={styles.infoform}>
-            <ul>
-              <li><Link to=" "><span>Account settings</span></Link></li>
-              <li><span>Theme</span>
-                <div className={styles.theme} role="menu">
-                  <li onClick={() => toggleTheme("light")}>Light</li>
-                  <li onClick={() => toggleTheme("dark")}>Dark</li>
+
+        <div className={styles.userInfoBox} ref={infoRef}>
+          <img
+            className={styles.profileImage}
+            src={user.profile_image ? `https://react-server-wmqa.onrender.com${profileImage}` : "/default.jpg"}
+            alt="프로필"
+            onClick={handleProfileClick}
+          />
+
+          {showInfoForm && (
+            <div className={styles.infoform}>
+              <ul>
+                <li><Link to="/app/settings"><span>Account settings</span></Link></li>
+                <li>
+                  <span>Theme</span>
+                  <div className={styles.theme} role="menu">
+                    <li className={styles.light} onClick={() => toggleTheme("light")}>Light</li>
+                    <li className={styles.dark} onClick={() => toggleTheme("dark")}>Dark</li>
+                  </div>
+                </li>
+                <div className={styles.user}>
+                  <div className={styles.userbox}>
+                    <button className={styles.logout} onClick={handleLogout}>로그아웃</button>
+                  </div>
                 </div>
-              </li>
-              <div className={styles.user}>
-                <div className={styles.userbox}>
-                  <button className={styles.logout} onClick={handleLogout}>로그아웃</button>
-                </div>
-              </div>
-            </ul>
-          </div>
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </div>

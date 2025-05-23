@@ -103,16 +103,26 @@
   padding: 5px 10px;
   cursor: pointer;
 }
-.userInfoBox{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 10px 0;
-}
+
 .profileImage {
+  cursor: pointer;
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  object-fit: cover;
 }
 
+.userInfoBox {
+  position: relative;
+}
+
+.infoform {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 10px;
+  background-color: white;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
