@@ -61,7 +61,7 @@ nav{
   flex-direction: column;
 }
 .logo1 h2{
-  color: #000;
+  color: var(--text-color);
   font-size: 36px;
   margin: 10px 0px;
   font-weight: 900;
@@ -69,7 +69,7 @@ nav{
 .logo1 span{
   width: 150px;
   height: 3px;
-  background: #000;
+  background: var(--header-text);
   border-radius: 100%;
 }
 ul{

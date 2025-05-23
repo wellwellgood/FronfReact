@@ -77,7 +77,7 @@
     background: none;
     border: none;
     font-size: 16px;
-    color: #1f2937;
+    color: var(--text-color);
     cursor: pointer;
     padding-left: 40px;
     width: 100%;
