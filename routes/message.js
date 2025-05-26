@@ -1,21 +1,20 @@
-// routes/message.js
 const express = require("express");
-const pool = require("../DB.js");
+const { default: pool } = require("../DB.js");
 
 const router = express.Router();
 
 // ✅ 모든 메시지 가져오기
 router.get("/", async (req, res) => {
-  let conn;
+  let client;
   try {
-    conn = await pool.getConnection();
-    const messages = await conn.query("SELECT * FROM messages ORDER BY time ASC");
-    res.json(messages);
+    client = await pool.connect();
+    const result = await client.query("SELECT * FROM messages ORDER BY time ASC");
+    res.json(result.rows); // PostgreSQL은 rows에 데이터 있음
   } catch (err) {
     console.error("❌ 메시지 불러오기 오류:", err);
     res.status(500).json({ message: "서버 오류" });
   } finally {
-    if (conn) conn.release();
+    if (client) client.release();
   }
 });
 
@@ -26,12 +25,12 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ message: "필수 정보 누락" });
   }
 
-  let conn;
+  let client;
   try {
-    conn = await pool.getConnection();
+    client = await pool.connect();
     const time = new Date().toISOString();
-    await conn.query(
-      "INSERT INTO messages (sender_username, receiver_username, sender_name, content, time) VALUES (?, ?, ?, ?, ?)",
+    await client.query(
+      "INSERT INTO messages (sender_username, receiver_username, sender_name, content, time) VALUES ($1, $2, $3, $4, $5)",
       [sender_username, receiver_username, sender_name, content, time]
     );
     res.status(201).json({ message: "메시지 저장 완료" });
@@ -39,21 +38,22 @@ router.post("/", async (req, res) => {
     console.error("❌ 메시지 저장 오류:", err);
     res.status(500).json({ message: "서버 오류" });
   } finally {
-    if (conn) conn.release();
+    if (client) client.release();
   }
 });
-//모든 유저 조회
+
+// ✅ 모든 유저 조회
 router.get("/users", async (req, res) => {
-  let conn;
+  let client;
   try {
-    conn = await pool.getConnection();
-    const rows = await conn.query("SELECT id, username, name FROM users");
-    res.status(200).json(rows);
+    client = await pool.connect();
+    const result = await client.query("SELECT id, username, name FROM users");
+    res.status(200).json(result.rows);
   } catch (err) {
-    console.error("❌ 유저 불러오기 오류:", err);
+    console.error("❌ 유저 불러오기 오류:", err.message);
     res.status(500).json({ message: "서버 오류" });
   } finally {
-    if (conn) conn.release();
+    if (client) client.release();
   }
 });
 
