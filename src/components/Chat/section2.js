@@ -78,7 +78,7 @@ const Section2 = ({ username, name }) => {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim() || !selectedUser) return;
+    if (!input.trim() || !selectedUser || !username || !name) return;
 
     const msg = {
       sender_username: username,
@@ -86,7 +86,8 @@ const Section2 = ({ username, name }) => {
       sender_name: name,
       content: input,
       time: new Date().toISOString(), // ✅ time 명시
-    };
+    }
+    console.log("보낼 메시지 구조:", msg);
 
     try {
       await axios.post(`${API}/api/messages`, msg);
