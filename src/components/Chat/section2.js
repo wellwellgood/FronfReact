@@ -6,6 +6,8 @@ import Search from "../../search";
 import { useNavigate } from "react-router-dom";
 
 const Section2 = () => {
+  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
   const [socket, setSocket] = useState(null);
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -18,13 +20,15 @@ const Section2 = () => {
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const [name, setName] = useState("");
 
-  const fetchSearchData = () => {};
-  const handleLogout = () => {};
+  const API = process.env.REACT_APP_API || "https://react-server-wmqa.onrender.com";
 
-  const API = "https://react-server-wmqa.onrender.com";
+  useEffect(() => {
+    const storedUsername = sessionStorage.getItem("username");
+    const storedName = sessionStorage.getItem("name");
+    if (storedUsername) setUsername(storedUsername);
+    if (storedName) setName(storedName);
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -80,8 +84,20 @@ const Section2 = () => {
   }, [messages]);
 
   const handleSend = async () => {
-    console.log("sibmit")
-    if (!input.trim() || !selectedUser || !username || !name) return;
+    if (!input.trim()) {
+      console.error("❌ 메시지 내용이 비어 있음");
+      return;
+    }
+
+    if (!selectedUser) {
+      console.error("❌ 대상 유저가 선택되지 않음");
+      return;
+    }
+
+    if (!username || !name) {
+      console.error("❌ 사용자 정보 없음:", { username, name });
+      return;
+    }
 
     const msg = {
       sender_username: username,
@@ -99,17 +115,7 @@ const Section2 = () => {
       console.error("❌ 메시지 전송 오류:", err);
     }
   };
-  
-  useEffect(() => {
-    const storedUsername = sessionStorage.getItem("username");
-    const storedName = sessionStorage.getItem("name");
-  
-    if (storedUsername && storedName) {
-      setUsername(storedUsername);
-      setName(storedName);
-    }
-  }, []);
-  
+
   return (
     <div className={styles.container}>
       <nav>
@@ -137,14 +143,14 @@ const Section2 = () => {
 
       <Search
         setTheme={setTheme}
-        fetchSearchData={fetchSearchData}
+        fetchSearchData={() => {}}
         searchResults={searchResults}
         isLoading={isLoading}
         setSearchText={setSearchText}
         searchText={searchText}
         showResults={showResults}
         setShowResults={setShowResults}
-        handleLogout={handleLogout}
+        handleLogout={() => {}}
       />
 
       <div className={styles.userList}>
@@ -196,7 +202,7 @@ const Section2 = () => {
             onChange={(e) => setInput(e.target.value)}
             placeholder="메시지를 입력하세요"
           />
-          <button className={styles.submit} onClick={handleSend} disabled={!input.trim() || !selectedUser}>전송</button>
+          <button onClick={handleSend}>전송</button>
         </div>
       </div>
     </div>
