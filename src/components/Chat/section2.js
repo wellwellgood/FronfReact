@@ -23,6 +23,7 @@ const Section2 = () => {
 
   const API = process.env.REACT_APP_API || "https://react-server-wmqa.onrender.com";
 
+  // ✅ sessionStorage에서 사용자 정보 가져오기
   useEffect(() => {
     const storedUsername = sessionStorage.getItem("username");
     const storedName = sessionStorage.getItem("name");
@@ -60,15 +61,20 @@ const Section2 = () => {
     return () => newSocket.disconnect();
   }, []);
 
+  // ✅ username이 설정된 후 유저 목록 요청
   useEffect(() => {
+    if (!username) return;
+
     axios.get(`${API}/api/users`).then((res) => {
       const userList = Array.isArray(res.data) ? res.data : [];
-      if (userList.length && userList.filter) {
-        setUsers(userList.filter((u) => u.username !== username));
-      } else {
-        setUsers([]);
-      }
+      const filtered = userList.filter((u) => u.username !== username);
+      setUsers(filtered);
     });
+  }, [username]);
+
+  // ✅ username이 설정된 후 메시지 요청
+  useEffect(() => {
+    if (!username) return;
 
     axios.get(`${API}/api/messages`).then((res) => {
       const data = res.data.map((msg) => ({
