@@ -24,5 +24,8 @@ async function testConnection() {
   }
 }
 
-// 👉 pool만 내보내기 (깔끔하게)
-module.exports = pool;
+// ✅ 필요한 것들 내보내기
+module.exports = {
+  testConnection,
+  default: pool,
+};
