@@ -239,3 +239,88 @@ nav {
 .submit:hover{
   color: blue;
 }
+
+.myMessage, .theirMessage {
+  display: flex;
+  align-items: flex-end;
+  margin: 10px 0;
+}
+
+.myMessage {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.theirMessage {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.profileIcon {
+  width: 36px;
+  height: 36px;
+  background-color: #90caf9;
+  color: white;
+  font-weight: bold;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
+.bubbleWrapper {
+  max-width: 60%;
+  position: relative;
+}
+
+.messageBubble {
+  background-color: #eeeeee;
+  padding: 10px 14px;
+  border-radius: 18px;
+  position: relative;
+  word-break: break-word;
+}
+
+.myMessage .messageBubble {
+  background-color: #c8e6c9;
+}
+
+.theirMessage .messageBubble::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-right: 8px solid #eeeeee;
+  border-bottom: 8px solid transparent;
+}
+
+.myMessage .messageBubble::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: -8px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-left: 8px solid #c8e6c9;
+  border-bottom: 8px solid transparent;
+}
+
+.messageMeta {
+  font-size: 0.75rem;
+  color: gray;
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.readMark {
+  color: green;
+  font-weight: 500;
+}

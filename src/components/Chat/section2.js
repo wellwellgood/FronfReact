@@ -5,7 +5,7 @@ import styles from "./section2.module.css";
 import Search from "../../search";
 import { useNavigate } from "react-router-dom";
 
-const Section2 = () => {
+const Section2 = ({ username, name }) => {
   const [socket, setSocket] = useState(null);
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -165,29 +165,43 @@ const Section2 = () => {
           {selectedUser ? `${selectedUser.name}님과 채팅중` : "채팅할 유저를 선택하세요"}
         </div>
         <div className={styles.messages} ref={chatBoxRef}>
-          {messages
-            .filter(
-              (msg) =>
-                (msg.sender_username === username && msg.receiver_username === selectedUser?.username) ||
-                (msg.receiver_username === username && msg.sender_username === selectedUser?.username)
-            )
-            .map((msg, index) => (
+        {messages
+          .filter(
+            (msg) =>
+              (msg.sender_username === username && msg.receiver_username === selectedUser?.username) ||
+              (msg.receiver_username === username && msg.sender_username === selectedUser?.username)
+          )
+          .map((msg, index) => {
+            const isMine = msg.sender_username === username;
+            return (
               <div
                 key={index}
-                className={msg.sender_username === username ? styles.myMessage : styles.theirMessage}
+                className={isMine ? styles.myMessage : styles.theirMessage}
               >
-                <div className={styles.messageMeta}>
-                  <span className={styles.sender}>{msg.sender_name}</span>
-                  <span className={styles.time}>
-                    {msg.time ? new Date(msg.time).toLocaleTimeString("ko-KR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    }) : ""}
-                  </span>
+                {/* 프로필 아이콘 */}
+                {!isMine && <div className={styles.profileIcon}>{msg.sender_name[0]}</div>}
+        
+                <div className={styles.bubbleWrapper}>
+                  <div className={styles.messageBubble}>
+                    <div className={styles.messageText}>{msg.content}</div>
+                    <div className={styles.messageMeta}>
+                      <span className={styles.time}>
+                        {msg.time ? new Date(msg.time).toLocaleTimeString("ko-KR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }) : ""}
+                      </span>
+                      {/* 읽음 표시 */}
+                      {isMine && <span className={styles.readMark}>읽음</span>}
+                    </div>
+                  </div>
                 </div>
-                <div className={styles.messageText}>{msg.content}</div>
+        
+                {/* 내 메시지일 때 프로필 아이콘 */}
+                {isMine && <div className={styles.profileIcon}>{name[0]}</div>}
               </div>
-            ))}
+            );
+          })}
         </div>
         <div className={styles.inputBox}>
           <input
