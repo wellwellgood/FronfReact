@@ -85,9 +85,8 @@ const Section2 = ({ username, name }) => {
       receiver_username: selectedUser.username,
       sender_name: name,
       content: input,
-      time: new Date().toISOString(), // ✅ time 명시
-    }
-    console.log("보낼 메시지 구조:", msg);
+      time: new Date().toISOString(),
+    };
 
     try {
       await axios.post(`${API}/api/messages`, msg);
