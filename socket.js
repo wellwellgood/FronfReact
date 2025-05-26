@@ -20,8 +20,8 @@ module.exports = (server) => {
       try {
         const client = await pool.connect();
         await client.query(
-          'INSERT INTO messages (username, content, time) VALUES ($1, $2, $3)',
-          [msg.user, msg.content, new Date(msg.time)]
+          'INSERT INTO messages (sender_username, receiver_username, sender_name, content, time) VALUES ($1, $2, $3, $4, $5)',
+          [msg.sender_username, msg.receiver_username, msg.sender_name, msg.content, msg.time]
         );
         client.release();
       } catch (err) {
