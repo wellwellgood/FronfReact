@@ -17,14 +17,21 @@ const Section2 = () => {
   const [searchText, setSearchText] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
-
-  const fetchSearchData = () => {};
-  const handleLogout = () => {};
+  const navigate = useNavigate();
 
   const API = "https://react-server-wmqa.onrender.com";
+
+  useEffect(() => {
+    const storedUsername = sessionStorage.getItem("username");
+    const storedName = sessionStorage.getItem("name");
+
+    if (storedUsername && storedName) {
+      setUsername(storedUsername);
+      setName(storedName);
+    }
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -57,13 +64,11 @@ const Section2 = () => {
   }, []);
 
   useEffect(() => {
+    if (!username) return;
+
     axios.get(`${API}/api/users`).then((res) => {
       const userList = Array.isArray(res.data) ? res.data : [];
-      if (userList.length && userList.filter) {
-        setUsers(userList.filter((u) => u.username !== username));
-      } else {
-        setUsers([]);
-      }
+      setUsers(userList.filter((u) => u.username !== username));
     });
 
     axios.get(`${API}/api/messages`).then((res) => {
@@ -80,7 +85,8 @@ const Section2 = () => {
   }, [messages]);
 
   const handleSend = async () => {
-    console.log("sibmit")
+    console.log("📨 handleSend 실행", { input, selectedUser, username, name });
+
     if (!input.trim() || !selectedUser || !username || !name) return;
 
     const msg = {
@@ -96,41 +102,25 @@ const Section2 = () => {
       socket.emit("message", msg);
       setInput("");
     } catch (err) {
-      console.error("❌ 메시지 전송 오류:", err);
+      console.error("❌ 메시지 전송 오류:", err.response?.data || err.message);
     }
   };
-  
-  useEffect(() => {
-    const storedUsername = sessionStorage.getItem("username");
-    const storedName = sessionStorage.getItem("name");
-  
-    if (storedUsername && storedName) {
-      setUsername(storedUsername);
-      setName(storedName);
-    }
-  }, []);
-  
+
+  const fetchSearchData = () => {};
+  const handleLogout = () => {};
+
   return (
     <div className={styles.container}>
       <nav>
         <div className={styles.nav}>
           <div className={styles.logo1}>
             <h2>Logo</h2>
-            <span></span>
           </div>
           <ul className={styles.navmenu}>
-            <li className={styles.homebtn}>
-              <button className={styles.button} onClick={() => navigate("/main")}>Home</button>
-            </li>
-            <li className={styles.infobtn}>
-              <button className={styles.button} onClick={() => navigate("/ChatApp")}>Chat</button>
-            </li>
-            <li className={styles.filebtn}>
-              <button className={styles.button} onClick={() => navigate("/file")}>File</button>
-            </li>
-            <li className={styles.emailbtn}>
-              <button onClick={() => navigate("/sendEmail")}>Email</button>
-            </li>
+            <li><button onClick={() => navigate("/main")}>Home</button></li>
+            <li><button onClick={() => navigate("/ChatApp")}>Chat</button></li>
+            <li><button onClick={() => navigate("/file")}>File</button></li>
+            <li><button onClick={() => navigate("/sendEmail")}>Email</button></li>
           </ul>
         </div>
       </nav>
@@ -153,7 +143,10 @@ const Section2 = () => {
           <div
             key={user.username}
             className={`${styles.userItem} ${selectedUser?.username === user.username ? styles.selected : ""}`}
-            onClick={() => setSelectedUser(user)}
+            onClick={() => {
+              console.log("✅ 선택된 유저:", user);
+              setSelectedUser(user);
+            }}
           >
             {user.name} ({user.username})
           </div>
@@ -164,45 +157,41 @@ const Section2 = () => {
         <div className={styles.chatHeader}>
           {selectedUser ? `${selectedUser.name}님과 채팅중` : "채팅할 유저를 선택하세요"}
         </div>
+
         <div className={styles.messages} ref={chatBoxRef}>
-        {messages
-          .filter(
-            (msg) =>
-              (msg.sender_username === username && msg.receiver_username === selectedUser?.username) ||
-              (msg.receiver_username === username && msg.sender_username === selectedUser?.username)
-          )
-          .map((msg, index) => {
-            const isMine = msg.sender_username === username;
-            return (
-              <div
-                key={index}
-                className={isMine ? styles.myMessage : styles.theirMessage}
-              >
-                {/* 프로필 아이콘 */}
-                {!isMine && <div className={styles.profileIcon}>{msg.sender_name[0]}</div>}
-        
-                <div className={styles.bubbleWrapper}>
-                  <div className={styles.messageBubble}>
-                    <div className={styles.messageText}>{msg.content}</div>
-                    <div className={styles.messageMeta}>
-                      <span className={styles.time}>
-                        {msg.time ? new Date(msg.time).toLocaleTimeString("ko-KR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }) : ""}
-                      </span>
-                      {/* 읽음 표시 */}
-                      {isMine && <span className={styles.readMark}>읽음</span>}
+          {messages
+            .filter(
+              (msg) =>
+                (msg.sender_username === username && msg.receiver_username === selectedUser?.username) ||
+                (msg.receiver_username === username && msg.sender_username === selectedUser?.username)
+            )
+            .map((msg, index) => {
+              const isMine = msg.sender_username === username;
+              return (
+                <div key={index} className={isMine ? styles.myMessage : styles.theirMessage}>
+                  {!isMine && <div className={styles.profileIcon}>{msg.sender_name[0]}</div>}
+                  <div className={styles.bubbleWrapper}>
+                    <div className={styles.messageBubble}>
+                      <div className={styles.messageText}>{msg.content}</div>
+                      <div className={styles.messageMeta}>
+                        <span className={styles.time}>
+                          {msg.time
+                            ? new Date(msg.time).toLocaleTimeString("ko-KR", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                            : ""}
+                        </span>
+                        {isMine && <span className={styles.readMark}>읽음</span>}
+                      </div>
                     </div>
                   </div>
+                  {isMine && <div className={styles.profileIcon}>{name[0]}</div>}
                 </div>
-        
-                {/* 내 메시지일 때 프로필 아이콘 */}
-                {isMine && <div className={styles.profileIcon}>{name[0]}</div>}
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
+
         <div className={styles.inputBox}>
           <input
             type="text"
@@ -210,7 +199,9 @@ const Section2 = () => {
             onChange={(e) => setInput(e.target.value)}
             placeholder="메시지를 입력하세요"
           />
-          <button className={styles.submit} onClick={handleSend} disabled={!input.trim() || !selectedUser}>전송</button>
+          <button className={styles.submit} onClick={handleSend} disabled={!input.trim() || !selectedUser}>
+            전송
+          </button>
         </div>
       </div>
     </div>
