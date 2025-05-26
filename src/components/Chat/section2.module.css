@@ -236,3 +236,6 @@ nav {
 .input:focus{
     border-bottom: 5px solid var(--focus-shadow);
 }
+.submit:hover{
+  color: blue;
+}
