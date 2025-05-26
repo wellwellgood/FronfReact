@@ -1,5 +1,5 @@
 const express = require("express");
-const { default: pool } = require("../DB.js");
+const pool = require("../DB.js");
 
 const router = express.Router();
 
