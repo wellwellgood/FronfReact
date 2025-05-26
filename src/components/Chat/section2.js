@@ -1,4 +1,3 @@
-// section2.js
 import React, { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import axios from "axios";
@@ -35,7 +34,21 @@ const Section2 = ({ username, name }) => {
     setSocket(newSocket);
 
     newSocket.on("message", (msg) => {
-      setMessages((prev) => [...prev, msg]);
+      const safeMsg = {
+        ...msg,
+        time: msg.time || new Date().toISOString(),
+      };
+
+      setMessages((prev) => {
+        const isDuplicate = prev.some(
+          (m) =>
+            m.sender_username === safeMsg.sender_username &&
+            m.receiver_username === safeMsg.receiver_username &&
+            m.content === safeMsg.content &&
+            m.time === safeMsg.time
+        );
+        return isDuplicate ? prev : [...prev, safeMsg];
+      });
     });
 
     return () => newSocket.disconnect();
@@ -43,17 +56,20 @@ const Section2 = ({ username, name }) => {
 
   useEffect(() => {
     axios.get(`${API}/api/users`).then((res) => {
-      console.log("유저 응답 데이터:", res.data);
       const userList = Array.isArray(res.data) ? res.data : [];
       if (userList.length && userList.filter) {
         setUsers(userList.filter((u) => u.username !== username));
       } else {
-        console.warn("⚠️ 유저 데이터가 배열이 아님:", userList);
         setUsers([]);
       }
     });
+
     axios.get(`${API}/api/messages`).then((res) => {
-      setMessages(res.data);
+      const data = res.data.map((msg) => ({
+        ...msg,
+        time: msg.time || new Date().toISOString(),
+      }));
+      setMessages(data);
     });
   }, [username]);
 
@@ -69,12 +85,12 @@ const Section2 = ({ username, name }) => {
       receiver_username: selectedUser.username,
       sender_name: name,
       content: input,
+      time: new Date().toISOString(), // ✅ time 명시
     };
 
     try {
-      axios.post(`${API}/api/messages`, msg)
+      await axios.post(`${API}/api/messages`, msg);
       socket.emit("message", msg);
-      setMessages((prev) => [...prev, { ...msg, time: new Date().toISOString() }]);
       setInput("");
     } catch (err) {
       console.error("❌ 메시지 전송 오류:", err);
@@ -90,12 +106,19 @@ const Section2 = ({ username, name }) => {
             <span></span>
           </div>
           <ul className={styles.navmenu}>
-            <li className={styles.homebtn}><button className={styles.button} onClick={() => navigate("/main")}>Home</button></li>
-            <li className={styles.infobtn}><button className={styles.button} onClick={() => navigate("/ChatApp")}>Chat</button></li>
-            <li className={styles.filebtn}><button className={styles.button} onClick={() => navigate("/file")}>File</button></li>
-            <li className={styles.emailbtn}><button onClick={() => navigate("/sendEmail")}>Email</button></li>
+            <li className={styles.homebtn}>
+              <button className={styles.button} onClick={() => navigate("/main")}>Home</button>
+            </li>
+            <li className={styles.infobtn}>
+              <button className={styles.button} onClick={() => navigate("/ChatApp")}>Chat</button>
+            </li>
+            <li className={styles.filebtn}>
+              <button className={styles.button} onClick={() => navigate("/file")}>File</button>
+            </li>
+            <li className={styles.emailbtn}>
+              <button onClick={() => navigate("/sendEmail")}>Email</button>
+            </li>
           </ul>
-          {/* <div className={styles.setting}><Link to="/">Setting</Link></div> */}
         </div>
       </nav>
 
@@ -110,15 +133,13 @@ const Section2 = ({ username, name }) => {
         setShowResults={setShowResults}
         handleLogout={handleLogout}
       />
-      
+
       <div className={styles.userList}>
         <h3>유저 목록</h3>
         {users.map((user) => (
           <div
             key={user.username}
-            className={`${styles.userItem} ${
-              selectedUser?.username === user.username ? styles.selected : ""
-            }`}
+            className={`${styles.userItem} ${selectedUser?.username === user.username ? styles.selected : ""}`}
             onClick={() => setSelectedUser(user)}
           >
             {user.name} ({user.username})
@@ -140,19 +161,15 @@ const Section2 = ({ username, name }) => {
             .map((msg, index) => (
               <div
                 key={index}
-                className={
-                  msg.sender_username === username
-                    ? styles.myMessage
-                    : styles.theirMessage
-                }
+                className={msg.sender_username === username ? styles.myMessage : styles.theirMessage}
               >
                 <div className={styles.messageMeta}>
                   <span className={styles.sender}>{msg.sender_name}</span>
                   <span className={styles.time}>
-                    {new Date(msg.time).toLocaleTimeString("ko-KR", {
+                    {msg.time ? new Date(msg.time).toLocaleTimeString("ko-KR", {
                       hour: "2-digit",
                       minute: "2-digit",
-                    })}
+                    }) : ""}
                   </span>
                 </div>
                 <div className={styles.messageText}>{msg.content}</div>
