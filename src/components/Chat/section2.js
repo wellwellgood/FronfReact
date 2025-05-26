@@ -18,6 +18,8 @@ const Section2 = ({ username, name }) => {
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
 
   const fetchSearchData = () => {};
   const handleLogout = () => {};
@@ -98,7 +100,16 @@ const Section2 = ({ username, name }) => {
     }
   };
   
-
+  useEffect(() => {
+    const storedUsername = sessionStorage.getItem("username");
+    const storedName = sessionStorage.getItem("name");
+  
+    if (storedUsername && storedName) {
+      setUsername(storedUsername);
+      setName(storedName);
+    }
+  }, []);
+  
   return (
     <div className={styles.container}>
       <nav>
