@@ -183,7 +183,7 @@ const Section2 = ({ username, name }) => {
             onChange={(e) => setInput(e.target.value)}
             placeholder="메시지를 입력하세요"
           />
-          <button onClick={handleSend}>전송</button>
+          <button onClick={handleSend} disabled={!input.trim() || !selectedUser}>전송</button>
         </div>
       </div>
     </div>
