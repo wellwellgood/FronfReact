@@ -47,7 +47,7 @@ router.get("/users", async (req, res) => {
   let client;
   try {
     client = await pool.connect();
-    const result = await client.query("SELECT id, name FROM users");
+    const result = await client.query("SELECT id, username, name FROM users");
     res.status(200).json(result.rows);
   } catch (err) {
     console.error("❌ 유저 불러오기 오류:", err.message);
