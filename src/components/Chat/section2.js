@@ -18,6 +18,8 @@ const Section2 = ({ username, name }) => {
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
 
   const fetchSearchData = () => {};
   const handleLogout = () => {};
@@ -78,23 +80,9 @@ const Section2 = ({ username, name }) => {
   }, [messages]);
 
   const handleSend = async () => {
-    console.log("📨 handleSend 진입");
-  
-    if (!input.trim()) {
-      console.log("❌ input 없음:", input);
-      return;
-    }
-  
-    if (!selectedUser) {
-      console.log("❌ selectedUser 없음");
-      return;
-    }
-  
-    if (!username || !name) {
-      console.log("❌ 사용자 정보 없음:", { username, name });
-      return;
-    }
-  
+    console.log("sibmit")
+    if (!input.trim() || !selectedUser || !username || !name) return;
+
     const msg = {
       sender_username: username,
       receiver_username: selectedUser.username,
@@ -102,18 +90,24 @@ const Section2 = ({ username, name }) => {
       content: input,
       time: new Date().toISOString(),
     };
-  
-    console.log("📤 전송 준비된 메시지:", msg);
-  
+
     try {
       await axios.post(`${API}/api/messages`, msg);
       socket.emit("message", msg);
       setInput("");
-      console.log("✅ 메시지 전송 성공");
     } catch (err) {
       console.error("❌ 메시지 전송 오류:", err);
     }
   };
+  useEffect(() => {
+    const storedUsername = sessionStorage.getItem("username");
+    const storedName = sessionStorage.getItem("name");
+  
+    if (storedUsername && storedName) {
+      setUsername(storedUsername);
+      setName(storedName);
+    }
+  }, []);
 
   return (
     <div className={styles.container}>

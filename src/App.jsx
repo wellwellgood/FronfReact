@@ -34,7 +34,7 @@ function App() {
         <Route path="/" element={<LoginPage />} />
         <Route path="/main" element={<Main setTheme={setTheme} />} />
         {/* <Route path="/example" element={<Example />} /> */}
-        <Route path="/ChatApp" element={<Section2 />} />
+        <Route path="/ChatApp" element={<Section2 username={user.username} name={user.name} />} />
         <Route path="/file" element={<File />} />
         <Route path="/sendEmail" element={<Section4SendEmail />} />
         <Route path="/customCalendar" element={<CustomCalendar />} />
