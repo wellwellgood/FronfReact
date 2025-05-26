@@ -5,9 +5,7 @@ import styles from "./section2.module.css";
 import Search from "../../search";
 import { useNavigate } from "react-router-dom";
 
-const Section2 = () => {
-  const [username, setUsername] = useState("");
-  const [name, setName] = useState("");
+const Section2 = ({ username, name }) => {
   const [socket, setSocket] = useState(null);
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -20,6 +18,9 @@ const Section2 = () => {
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  const fetchSearchData = () => {};
+  const handleLogout = () => {};
 
   const API = "https://react-server-wmqa.onrender.com";
 
@@ -106,7 +107,7 @@ const Section2 = () => {
       setName(storedName);
     }
   }, []);
-
+  
   return (
     <div className={styles.container}>
       <nav>
