@@ -1,7 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const pool = require("../DB").default; // default export된 pool
+const pool = require("../DB"); // default export된 pool
 const router = express.Router();
 
 // ✅ 토큰 생성 함수

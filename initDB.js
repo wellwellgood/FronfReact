@@ -1,5 +1,5 @@
 // initDB.js
-const pool = require("./DB").default; // pg는 그냥 pool로 가져옴
+const pool = require("./DB"); // pg는 그냥 pool로 가져옴
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 5000;
