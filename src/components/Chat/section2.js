@@ -5,7 +5,7 @@ import styles from "./section2.module.css";
 import Search from "../../search";
 import { useNavigate } from "react-router-dom";
 
-const Section2 = ({ username, name }) => {
+const Section2 = () => {
   const [socket, setSocket] = useState(null);
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -18,6 +18,8 @@ const Section2 = ({ username, name }) => {
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
 
   const fetchSearchData = () => {};
   const handleLogout = () => {};
