@@ -12,7 +12,6 @@ const messageRoutes = require("./routes/message.js");
 const uploadRoutes = require("./routes/uploadRouter.js");
 const chatRoutes = require("./chatLog/logs.js");
 const socket = require("./socket.js");
-const userRoutes = require("./routes/user.js");
 
 const app = express();
 const server = http.createServer(app);
@@ -43,7 +42,7 @@ app.use(async (req, res, next) => {
 // API 라우트
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
-app.use("/api", userRoutes);
+app.use("/api", messageRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/chat", chatRoutes);
 
