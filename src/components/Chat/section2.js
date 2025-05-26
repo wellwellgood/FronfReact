@@ -22,7 +22,7 @@ const Section2 = ({ username, name }) => {
   const fetchSearchData = () => {};
   const handleLogout = () => {};
 
-  const API = process.env.REACT_APP_API || "http://localhost:4000";
+  const API = process.env.REACT_APP_API || "https://react-server-wmqa.onrender.com";
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
