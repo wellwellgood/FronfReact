@@ -1,7 +1,16 @@
-const { Pool } = require('pg');
+// DB.js
+const { default : Pool } = require('pg');
 require('dotenv').config();
 
 const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  ssl: process.env.DB_SSL === 'true',
+  connectionTimeoutMillis: 30000,
+  idleTimeoutMillis: 60000,
   connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false,
@@ -10,7 +19,7 @@ const pool = new Pool({
   idleTimeoutMillis: 60000,
 });
 
-// ✅ 연결 확인 함수 (선택)
+// ✅ 연결 확인용 함수
 async function testConnection() {
   let client;
   try {
