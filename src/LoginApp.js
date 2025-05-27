@@ -57,6 +57,8 @@ function LoginPage() {
       sessionStorage.setItem("userToken", accessToken);
       sessionStorage.setItem("userId", ID);
       sessionStorage.setItem("username", ID); // ✅ username 저장
+      sessionStorage.setItem("username", response.data.username);
+      sessionStorage.setItem("name", response.data.name);
       alert("로그인 성공!");
       navigate("/main");
     } catch (error) {
