@@ -324,3 +324,32 @@ nav {
   color: green;
   font-weight: 500;
 }
+
+
+.loading {
+  text-align: center;
+  color: #666;
+  padding: 20px;
+}
+
+.error {
+  color: #ff4444;
+  text-align: center;
+  padding: 20px;
+}
+
+.error button {
+  margin-left: 10px;
+  padding: 5px 10px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.noUsers {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+}
