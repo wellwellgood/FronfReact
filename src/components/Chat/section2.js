@@ -56,21 +56,33 @@ const Section2 = () => {
 
     // 새 메시지 수신
     newSocket.on("message", (msg) => {
+      console.log("📨 새 메시지 수신:", msg);
+      
       const safeMsg = {
         ...msg,
         time: msg.time || new Date().toISOString(),
-        read: false, // 새 메시지는 기본적으로 읽지 않음
+        read: msg.read || false,
+        id: msg.id || `temp_${Date.now()}`, // 임시 ID 생성 (서버에서 ID가 없을 경우)
       };
 
       setMessages((prev) => {
+        // 중복 메시지 확인 (ID 기준 또는 내용+시간 기준)
         const isDuplicate = prev.some(
           (m) =>
-            m.sender_username === safeMsg.sender_username &&
-            m.receiver_username === safeMsg.receiver_username &&
-            m.content === safeMsg.content &&
-            m.time === safeMsg.time
+            (m.id && safeMsg.id && m.id === safeMsg.id) ||
+            (m.sender_username === safeMsg.sender_username &&
+             m.receiver_username === safeMsg.receiver_username &&
+             m.content === safeMsg.content &&
+             Math.abs(new Date(m.time) - new Date(safeMsg.time)) < 1000) // 1초 이내 같은 메시지는 중복으로 처리
         );
-        return isDuplicate ? prev : [...prev, safeMsg];
+        
+        if (isDuplicate) {
+          console.log("🔄 중복 메시지 무시:", safeMsg);
+          return prev;
+        }
+        
+        console.log("✅ 새 메시지 추가:", safeMsg);
+        return [...prev, safeMsg];
       });
     });
 
@@ -138,32 +150,46 @@ const Section2 = () => {
 
   // 선택된 사용자가 변경될 때 해당 대화의 메시지들을 읽음 처리
   useEffect(() => {
-    if (selectedUser && username && socket) {
+    if (selectedUser && username && socket && socket.connected) {
+      console.log("👀 채팅방 입장 - 읽음 처리 시작");
+      
       // 현재 선택된 대화에서 내가 받은 메시지들을 읽음 처리
       const unreadMessages = messages.filter(msg => 
         msg.sender_username === selectedUser.username && 
         msg.receiver_username === username && 
-        !msg.read
+        !msg.read &&
+        msg.id
       );
 
-      unreadMessages.forEach(msg => {
-        if (msg.id) {
-          // 서버에 읽음 처리 알림
-          socket.emit("markAsRead", {
-            messageId: msg.id,
-            readBy: username
-          });
+      console.log("📖 읽음 처리할 메시지 수:", unreadMessages.length);
 
-          // 상대방에게 읽음 확인 전송
-          socket.emit("messageRead", {
-            messageId: msg.id,
-            readBy: username,
-            to: selectedUser.username
-          });
-        }
+      unreadMessages.forEach(msg => {
+        // 서버에 읽음 처리 알림
+        socket.emit("markAsRead", {
+          messageId: msg.id,
+          readBy: username
+        });
+
+        // 상대방에게 읽음 확인 전송
+        socket.emit("messageRead", {
+          messageId: msg.id,
+          readBy: username,
+          to: selectedUser.username
+        });
+
+        console.log("📖 읽음 처리:", msg.id);
       });
+
+      // 로컬 상태에서도 읽음 처리
+      if (unreadMessages.length > 0) {
+        setMessages(prev => prev.map(msg => 
+          unreadMessages.some(unread => unread.id === msg.id) 
+            ? { ...msg, read: true } 
+            : msg
+        ));
+      }
     }
-  }, [selectedUser, username, socket, messages]);
+  }, [selectedUser, username, socket]);  // messages 의존성 제거로 무한 루프 방지
 
   useEffect(() => {
     if (chatBoxRef.current) {
@@ -183,23 +209,34 @@ const Section2 = () => {
       sender_username: username,
       receiver_username: selectedUser.username,
       sender_name: name,
+      receiver_name: selectedUser.name, // 받는 사람 이름도 추가
       content: input.trim(),
       time: new Date().toISOString(),
-      read: false, // 새로 보낸 메시지는 읽지 않음 상태
+      read: false,
     };
 
+    console.log("📤 전송할 메시지 데이터:", msg);
+
     try {
+      // 먼저 HTTP API로 데이터베이스에 저장
       const response = await axios.post(`${API}/api/messages`, msg);
-      const savedMessage = response.data; // 서버에서 반환된 메시지 (ID 포함)
+      console.log("✅ 서버 응답:", response.data);
       
-      if (socket) {
+      const savedMessage = response.data;
+      
+      // 소켓으로 실시간 전송 (저장된 메시지 정보 포함)
+      if (socket && socket.connected) {
+        console.log("📡 소켓으로 메시지 전송:", savedMessage);
         socket.emit("message", savedMessage);
+      } else {
+        console.warn("⚠️ 소켓이 연결되지 않음");
       }
+      
       setInput("");
       console.log("✅ 메시지 전송 완료");
     } catch (err) {
       console.error("❌ 메시지 전송 오류:", err.response?.data || err.message);
-      alert("메시지 전송에 실패했습니다.");
+      alert(`메시지 전송에 실패했습니다: ${err.response?.data?.error || err.message}`);
     }
   };
 
