@@ -39,6 +39,7 @@
   --focus-shadow: rgba(0, 191, 165, 0.4);
   --gradient-start: #1e1e1e;
   --gradient-end: #005f46;
+  --nav-bg-img1 : url(image/)
 }
 
 * {

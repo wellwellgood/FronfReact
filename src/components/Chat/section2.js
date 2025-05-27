@@ -67,9 +67,13 @@ const Section2 = () => {
     if (!username) return;
 
     axios.get(`${API}/api/users`).then((res) => {
+      console.log("📋 유저 목록:", res.data);
       const userList = Array.isArray(res.data) ? res.data : [];
       setUsers(userList.filter((u) => u.username !== username));
-    });
+    })
+    .catch((err) => {
+      console.error("❌ 유저 목록 가져오기 오류:", err.response?.data || err.message);
+    },[username]);
 
     axios.get(`${API}/api/messages`).then((res) => {
       const data = res.data.map((msg) => ({
