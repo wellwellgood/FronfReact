@@ -26,10 +26,12 @@ const Section2 = () => {
   useEffect(() => {
     const storedUsername = sessionStorage.getItem("username");
     const storedName = sessionStorage.getItem("name");
-
     if (storedUsername && storedName) {
+      console.log("✅ 로그인된 사용자:", storedUsername, storedName);
       setUsername(storedUsername);
       setName(storedName);
+    } else {
+      console.warn("❌ 세션 저장소에 username 또는 name 없음");
     }
   }, []);
 
@@ -65,23 +67,28 @@ const Section2 = () => {
 
   useEffect(() => {
     if (!username) return;
-
-    axios.get(`${API}/api/users`).then((res) => {
-      console.log("📋 유저 목록:", res.data);
-      const userList = Array.isArray(res.data) ? res.data : [];
-      setUsers(userList.filter((u) => u.username !== username));
-    })
-    .catch((err) => {
-      console.error("❌ 유저 목록 가져오기 오류:", err.response?.data || err.message);
-    },[username]);
-
-    axios.get(`${API}/api/messages`).then((res) => {
-      const data = res.data.map((msg) => ({
-        ...msg,
-        time: msg.time || new Date().toISOString(),
-      }));
-      setMessages(data);
-    });
+  
+    axios.get(`${API}/api/users`)
+      .then((res) => {
+        console.log("📋 유저 목록:", res.data);
+        const userList = Array.isArray(res.data) ? res.data : [];
+        setUsers(userList.filter((u) => u.username !== username));
+      })
+      .catch((err) => {
+        console.error("❌ 유저 목록 가져오기 오류:", err.response?.data || err.message);
+      });
+  
+    axios.get(`${API}/api/messages`)
+      .then((res) => {
+        const data = res.data.map((msg) => ({
+          ...msg,
+          time: msg.time || new Date().toISOString(),
+        }));
+        setMessages(data);
+      })
+      .catch((err) => {
+        console.error("❌ 메시지 목록 오류:", err.response?.data || err.message);
+      });
   }, [username]);
 
   useEffect(() => {
