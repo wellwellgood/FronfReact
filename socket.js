@@ -34,5 +34,15 @@ module.exports = (server) => {
     socket.on('disconnect', () => {
       console.log('❌ Client disconnected', socket.id);
     });
+
+    socket.on('markAsRead', async ({ messageId, readBy }) => {
+      // 데이터베이스에서 메시지 읽음 상태 업데이트
+      await updateMessageReadStatus(messageId, readBy);
+    });
+    
+    socket.on('messageRead', ({ messageId, readBy, to }) => {
+      // 상대방에게 읽음 확인 전송
+      socket.to(to).emit('messageRead', { messageId, readBy });
+    });
   });
 };
