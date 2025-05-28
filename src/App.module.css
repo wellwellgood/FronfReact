@@ -18,6 +18,7 @@
   --focus-shadow: rgba(44, 148, 126, 0.3);
   --gradient-start: rgba(255, 255, 255, 1);
   --gradient-end: rgba(128, 255, 219, 1);
+  --box-swadow: rgba(0, 0, 0, 0.1);
 }
 
 :root[data-theme='dark'] {
@@ -39,6 +40,7 @@
   --focus-shadow: rgba(0, 191, 165, 0.4);
   --gradient-start: #1e1e1e;
   --gradient-end: #005f46;
+  --box-swadow: rgba(255, 255, 255, 0.9);
 }
 
 * {

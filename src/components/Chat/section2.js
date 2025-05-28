@@ -4,6 +4,7 @@ import axios from "axios";
 import styles from "./section2.module.css";
 import Search from "../../search";
 import { useNavigate } from "react-router-dom";
+import { FaPaperclip } from "react-icons/fa";
 
 const Section2 = () => {
   const [socket, setSocket] = useState(null);
@@ -24,6 +25,8 @@ const Section2 = () => {
   const [userListError, setUserListError] = useState("");
   const [readMessages, setReadMessages] = useState(new Set()); // 읽은 메시지 ID 저장
   const navigate = useNavigate();
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   const API = "https://react-server-wmqa.onrender.com";
 
@@ -47,7 +50,9 @@ const Section2 = () => {
   }, [theme]);
 
   useEffect(() => {
-    const newSocket = io(API);
+    const newSocket = io(API, {
+      transports  : ["websocket"],
+    });
     setSocket(newSocket);
 
     newSocket.on("connect", () => {
@@ -238,6 +243,41 @@ const Section2 = () => {
       console.error("❌ 메시지 전송 오류:", err.response?.data || err.message);
       alert(`메시지 전송에 실패했습니다: ${err.response?.data?.error || err.message}`);
     }
+
+    if ((!input.trim() && !selectedFile) || !selectedUser || !username || !name) {
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append("sender_username", username);
+    formData.append("receiver_username", selectedUser.username);
+    formData.append("sender_name", name);
+    formData.append("receiver_name", selectedUser.name);
+    formData.append("content", input.trim());
+    formData.append("time", new Date().toISOString());
+    formData.append("read", false);
+    
+    if (selectedFile) {
+      formData.append("file", selectedFile);
+    }
+  
+    try {
+      const response = await axios.post(`${API}/api/messages`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+  
+      const savedMessage = response.data;
+  
+      if (socket && socket.connected) {
+        socket.emit("message", savedMessage);
+      }
+  
+      setInput("");
+      setSelectedFile(null);
+    } catch (err) {
+      console.error("❌ 메시지 전송 오류:", err.response?.data || err.message);
+      alert(`메시지 전송 실패: ${err.response?.data?.error || err.message}`);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -313,112 +353,136 @@ const Section2 = () => {
         handleLogout={handleLogout}
       />
 
-      <div className={styles.userList}>
-        <h3>유저 목록</h3>
-        
-        {isLoading && <div className={styles.loading}>로딩 중...</div>}
-        
-        {userListError && (
-          <div className={styles.error}>
-            {userListError}
-            <button onClick={() => window.location.reload()}>새로고침</button>
-          </div>
-        )}
-        
-        {!isLoading && !userListError && users.length === 0 && (
-          <div className={styles.noUsers}>등록된 다른 사용자가 없습니다.</div>
-        )}
-        
-        {users.map((user) => {
-          // 각 유저와의 안읽은 메시지 수 계산
-          const unreadCount = messages.filter(msg => 
-            msg.sender_username === user.username && 
-            msg.receiver_username === username && 
-            !msg.read
-          ).length;
-
-          return (
-            <div
-              key={user.username}
-              className={`${styles.userItem} ${selectedUser?.username === user.username ? styles.selected : ""}`}
-              onClick={() => {
-                console.log("✅ 선택된 유저:", user);
-                setSelectedUser(user);
-              }}
-            >
-              <div className={styles.userInfo}>
-                <span>{user.name} ({user.username})</span>
-                {unreadCount > 0 && (
-                  <span className={styles.unreadBadge}>{unreadCount}</span>
-                )}
-              </div>
+      <div className={styles.chatscreen}>
+        <div className={styles.userList}>
+          <h3>유저 목록</h3>
+          
+          {isLoading && <div className={styles.loading}>로딩 중...</div>}
+          
+          {userListError && (
+            <div className={styles.error}>
+              {userListError}
+              <button onClick={() => window.location.reload()}>새로고침</button>
             </div>
-          );
-        })}
-      </div>
-
-      <div className={styles.chatBox}>
-        <div className={styles.chatHeader}>
-          {selectedUser ? `${selectedUser.name}님과 채팅중` : "채팅할 유저를 선택하세요"}
-        </div>
-
-        <div className={styles.messages} ref={chatBoxRef}>
-          {messages
-            .filter(
-              (msg) =>
-                selectedUser && (
-                  (msg.sender_username === username && msg.receiver_username === selectedUser.username) ||
-                  (msg.receiver_username === username && msg.sender_username === selectedUser.username)
-                )
-            )
-            .map((msg, index) => {
-              const isMine = msg.sender_username === username;
-              const readStatus = getMessageReadStatus(msg);
-              
-              return (
-                <div key={index} className={isMine ? styles.myMessage : styles.theirMessage}>
-                  {!isMine && <div className={styles.profileIcon}>{msg.sender_name?.[0] || "?"}</div>}
-                  <div className={styles.bubbleWrapper}>
-                    <div className={styles.messageBubble}>
-                      <div className={styles.messageText}>{msg.content}</div>
-                      <div className={styles.messageMeta}>
-                        <span className={styles.time}>
-                          {msg.time
-                            ? new Date(msg.time).toLocaleTimeString("ko-KR", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
-                            : ""}
-                        </span>
-                        {isMine && readStatus && (
-                          <span className={`${styles.readMark} ${readStatus === '읽음' ? styles.read : styles.unread}`}>
-                            {readStatus}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  {isMine && <div className={styles.profileIcon}>{name?.[0] || "?"}</div>}
+          )}
+          
+          {!isLoading && !userListError && users.length === 0 && (
+            <div className={styles.noUsers}>등록된 다른 사용자가 없습니다.</div>
+          )}
+          
+          {users.map((user) => {
+            // 각 유저와의 안읽은 메시지 수 계산
+            const unreadCount = messages.filter(msg => 
+              msg.sender_username === user.username && 
+              msg.receiver_username === username && 
+              !msg.read
+            ).length;
+  
+            return (
+              <div
+                key={user.username}
+                className={`${styles.userItem} ${selectedUser?.username === user.username ? styles.selected : ""}`}
+                onClick={() => {
+                  console.log("✅ 선택된 유저:", user);
+                  setSelectedUser(user);
+                }}
+              >
+                <div className={styles.userInfo}>
+                  <span>{user.name} ({user.username})</span>
+                  {unreadCount > 0 && (
+                    <span className={styles.unreadBadge}>{unreadCount}</span>
+                  )}
                 </div>
-              );
-            })}
+              </div>
+            );
+          })}
         </div>
+  
+        <div className={styles.chatBox}>
+          <div className={styles.chatHeaderContainer}>
+            <div className={styles.chatHeader}>
+              {selectedUser ? `${selectedUser.name}님과 채팅중` : "채팅할 유저를 선택하세요"}
+            </div>
+          
+            <div className={styles.messages} ref={chatBoxRef}>
+              {messages
+                .filter(
+                  (msg) =>
+                    selectedUser && (
+                      (msg.sender_username === username && msg.receiver_username === selectedUser.username) ||
+                      (msg.receiver_username === username && msg.sender_username === selectedUser.username)
+                    )
+                )
+                .map((msg, index) => {
+                  const isMine = msg.sender_username === username;
+                  const readStatus = getMessageReadStatus(msg);
 
-        <div className={styles.inputBox}>
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="메시지를 입력하세요"
-          />
-          <button 
-            className={styles.submit} 
-            onClick={handleSend} 
-            disabled={!input.trim() || !selectedUser}
-          >
-            전송
-          </button>
+                  return (
+                    <div key={index} className={isMine ? styles.myMessage : styles.theirMessage}>
+                      {!isMine && <div className={styles.profileIcon}>{msg.sender_name?.[0] || "?"}</div>}
+                      <div className={styles.bubbleWrapper}>
+                        <div className={styles.messageBubble}>
+                          <div className={styles.messageText}>{msg.content}</div>
+                          <div className={styles.messageMeta}>
+                            <span className={styles.time}>
+                              {msg.time
+                                ? new Date(msg.time).toLocaleTimeString("ko-KR", {
+                                    year:"2-digit",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })
+                                : ""}
+                            </span>
+                            {isMine && readStatus && (
+                              <span className={`${styles.readMark} ${readStatus === '읽음' ? styles.read : styles.unread}`}>
+                                {readStatus}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {isMine && <div className={styles.profileIcon}>{name?.[0] || "?"}</div>}
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+  
+          
+          <div className={styles.inputBox}>
+            <button
+              type="button"
+              className={styles.fileButton}
+              onClick={() => fileInputRef.current.click()}
+              title="파일 첨부"
+            >
+              <FaPaperclip size={20} />
+            </button>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={(e) => setSelectedFile(e.target.files[0])}
+              style={{ display: "none" }}
+            />
+
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="메시지를 입력하세요"
+            />
+
+            <button 
+              className={styles.submit} 
+              onClick={handleSend} 
+              disabled={(!input.trim() && !selectedFile) || !selectedUser}
+            >
+              전송
+            </button>
+          </div>
+
         </div>
       </div>
     </div>
