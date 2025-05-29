@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef , useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import emailjs from "@emailjs/browser";
 import styles from "./AA/email.js/SendEmail.module.css";
@@ -8,13 +8,16 @@ export default function Section4SendEmail() {
   const form = useRef();
   const [text, setText] = useState("");
   const [agree, setAgree] = useState(false);
-  const [theme, setTheme] = useState("light");
+    const [theme, setTheme] = useState(() => {
+      return localStorage.getItem("theme") || "light";
+    });
   const [searchResults, setSearchResults] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const fetchSearchData = () => {};
   const handleLogout = () => {};
+  
   
   
   const handleSearchChange = (e) => setText(e.target.value);
@@ -49,6 +52,10 @@ export default function Section4SendEmail() {
         }
       );
   };
+    useEffect(() => {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("theme", theme);
+    }, [theme]);
 
   return (
     <div className={styles.body}>

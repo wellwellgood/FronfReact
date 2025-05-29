@@ -7,29 +7,39 @@ import { useNavigate } from "react-router-dom";
 import { FaPaperclip } from "react-icons/fa";
 
 const Section2 = () => {
+  // Socket 관련 상태
   const [socket, setSocket] = useState(null);
+  
+  // 사용자 관련 상태
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
+  
+  // 메시지 관련 상태
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const chatBoxRef = useRef(null);
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("theme") || "light";
-  });
+  const [readMessages, setReadMessages] = useState(new Set());
+  
+  // UI 관련 상태
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
   const [searchResults, setSearchResults] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [username, setUsername] = useState("");
-  const [name, setName] = useState("");
   const [userListError, setUserListError] = useState("");
-  const [readMessages, setReadMessages] = useState(new Set()); // 읽은 메시지 ID 저장
-  const navigate = useNavigate();
+  
+  // 파일 관련 상태
   const [selectedFile, setSelectedFile] = useState(null);
+  
+  // Refs
+  const chatBoxRef = useRef(null);
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
   const API = "https://react-server-wmqa.onrender.com";
 
+  // 초기 사용자 인증 확인
   useEffect(() => {
     const storedUsername = sessionStorage.getItem("username");
     const storedName = sessionStorage.getItem("name");
@@ -44,14 +54,18 @@ const Section2 = () => {
     }
   }, [navigate]);
 
+  // 테마 설정
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
 
+  // 소켓 연결 및 이벤트 리스너 설정
   useEffect(() => {
+    if (!username) return;
+
     const newSocket = io(API, {
-      transports  : ["websocket"],
+      transports: ["websocket"],
     });
     setSocket(newSocket);
 
@@ -59,34 +73,46 @@ const Section2 = () => {
       console.log("🔌 소켓 연결됨");
     });
 
-    // 새 메시지 수신
+    // 새 메시지 수신 (다른 사용자로부터)
     newSocket.on("message", (msg) => {
-      console.log("📨 새 메시지 수신:", msg);
+      console.log("📨 소켓으로 메시지 수신:", msg);
+      
+      if (!msg) {
+        console.warn("⚠️ 수신된 메시지가 null입니다.");
+        return;
+      }
+      
+      // 내가 보낸 메시지는 이미 handleSend에서 처리했으므로 무시
+      if (msg.sender_username === username) {
+        console.log("📤 내가 보낸 메시지 - 소켓에서 무시");
+        return;
+      }
       
       const safeMsg = {
         ...msg,
+        content: msg.content || '',
         time: msg.time || new Date().toISOString(),
         read: msg.read || false,
-        id: msg.id || `temp_${Date.now()}`, // 임시 ID 생성 (서버에서 ID가 없을 경우)
+        id: msg.id || `socket_${Date.now()}`,
       };
 
+      console.log("✅ 다른 사용자 메시지 추가:", safeMsg);
+      
       setMessages((prev) => {
-        // 중복 메시지 확인 (ID 기준 또는 내용+시간 기준)
-        const isDuplicate = prev.some(
-          (m) =>
-            (m.id && safeMsg.id && m.id === safeMsg.id) ||
-            (m.sender_username === safeMsg.sender_username &&
-             m.receiver_username === safeMsg.receiver_username &&
-             m.content === safeMsg.content &&
-             Math.abs(new Date(m.time) - new Date(safeMsg.time)) < 1000) // 1초 이내 같은 메시지는 중복으로 처리
+        // 중복 확인
+        const isDuplicate = prev.some((m) =>
+          (m.id && safeMsg.id && m.id === safeMsg.id) ||
+          (m.sender_username === safeMsg.sender_username &&
+           m.receiver_username === safeMsg.receiver_username &&
+           m.content === safeMsg.content &&
+           Math.abs(new Date(m.time) - new Date(safeMsg.time)) < 2000)
         );
         
         if (isDuplicate) {
-          console.log("🔄 중복 메시지 무시:", safeMsg);
+          console.log("🔄 중복 메시지 무시");
           return prev;
         }
         
-        console.log("✅ 새 메시지 추가:", safeMsg);
         return [...prev, safeMsg];
       });
     });
@@ -96,7 +122,6 @@ const Section2 = () => {
       console.log("📖 메시지 읽음 확인:", messageId, readBy);
       setReadMessages(prev => new Set([...prev, messageId]));
       
-      // 메시지 목록에서 해당 메시지의 read 상태 업데이트
       setMessages(prev => prev.map(msg => 
         msg.id === messageId ? { ...msg, read: true } : msg
       ));
@@ -107,8 +132,9 @@ const Section2 = () => {
     });
 
     return () => newSocket.disconnect();
-  }, []);
+  }, [username]);
 
+  // 사용자 목록 및 메시지 로드
   useEffect(() => {
     if (!username) {
       console.log("⏳ username이 없어서 API 호출 스킵");
@@ -119,167 +145,224 @@ const Section2 = () => {
     setIsLoading(true);
     setUserListError("");
 
-    axios.get(`${API}/api/users`)
-      .then((res) => {
-        console.log("📋 유저 목록 응답:", res.data);
-        const userList = Array.isArray(res.data) ? res.data : [];
-        const filteredUsers = userList.filter((u) => u.username !== username);
-        setUsers(filteredUsers);
+    // 유저 목록 가져오기
+    const fetchUsers = async () => {
+      try {
+        console.log("🌐 유저 목록 API 호출:", `${API}/api/users`);
+        const response = await axios.get(`${API}/api/users`, {
+          timeout: 10000, // 10초 타임아웃
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
         
-        if (filteredUsers.length === 0) {
-          setUserListError("다른 사용자가 없습니다.");
+        console.log("📋 유저 목록 전체 응답:", response);
+        console.log("📋 유저 목록 데이터:", response.data);
+        console.log("📋 응답 상태:", response.status);
+        
+        if (response.status === 200) {
+          let userList = [];
+          
+          // 응답 데이터 형식 확인 및 처리
+          if (Array.isArray(response.data)) {
+            userList = response.data;
+          } else if (response.data && Array.isArray(response.data.users)) {
+            userList = response.data.users;
+          } else if (response.data && Array.isArray(response.data.data)) {
+            userList = response.data.data;
+          } else {
+            console.warn("⚠️ 예상치 못한 응답 형식:", response.data);
+            userList = [];
+          }
+          
+          console.log("🔍 파싱된 유저 목록:", userList);
+          
+          const filteredUsers = userList.filter((u) => u && u.username && u.username !== username);
+          console.log("✅ 필터링된 유저 목록:", filteredUsers);
+          
+          setUsers(filteredUsers);
+          
+          if (filteredUsers.length === 0) {
+            setUserListError("다른 사용자가 없습니다.");
+          }
+        } else {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-      })
-      .catch((err) => {
-        console.error("❌ 유저 목록 가져오기 오류:", err.response?.data || err.message);
-        setUserListError("유저 목록을 불러올 수 없습니다.");
-      });
+      } catch (err) {
+        console.error("❌ 유저 목록 가져오기 상세 오류:", {
+          message: err.message,
+          response: err.response,
+          status: err.response?.status,
+          data: err.response?.data,
+          config: err.config
+        });
+        
+        let errorMessage = "유저 목록을 불러올 수 없습니다.";
+        
+        if (err.code === 'ECONNABORTED') {
+          errorMessage = "서버 응답 시간 초과 (네트워크 확인 필요)";
+        } else if (err.response?.status === 404) {
+          errorMessage = "API 엔드포인트를 찾을 수 없습니다.";
+        } else if (err.response?.status === 500) {
+          errorMessage = "서버 내부 오류가 발생했습니다.";
+        } else if (err.message.includes('Network Error')) {
+          errorMessage = "네트워크 연결을 확인해주세요.";
+        }
+        
+        setUserListError(errorMessage);
+        setUsers([]);
+      }
+    };
 
-    axios.get(`${API}/api/messages`)
-      .then((res) => {
-        console.log("💬 메시지 목록 응답:", res.data);
-        const data = res.data.map((msg) => ({
+    // 메시지 목록 가져오기
+    const fetchMessages = async () => {
+      try {
+        console.log("💬 메시지 목록 API 호출:", `${API}/api/messages`);
+        const response = await axios.get(`${API}/api/messages`, {
+          timeout: 10000,
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        console.log("💬 메시지 목록 응답:", response.data);
+        
+        let messageList = [];
+        if (Array.isArray(response.data)) {
+          messageList = response.data;
+        } else if (response.data && Array.isArray(response.data.messages)) {
+          messageList = response.data.messages;
+        } else if (response.data && Array.isArray(response.data.data)) {
+          messageList = response.data.data;
+        }
+        
+        const processedMessages = messageList.map((msg) => ({
           ...msg,
+          content: msg.content || '',
           time: msg.time || new Date().toISOString(),
-          read: msg.read || false, // 서버에서 읽음 상태 가져오기
+          read: msg.read || false,
         }));
-        setMessages(data);
-      })
-      .catch((err) => {
+        
+        console.log("🔄 처리된 메시지 목록:", processedMessages);
+        setMessages(processedMessages);
+      } catch (err) {
         console.error("❌ 메시지 목록 오류:", err.response?.data || err.message);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+        // 메시지 로드 실패는 심각하지 않으므로 빈 배열로 설정
+        setMessages([]);
+      }
+    };
+
+    // 순차적으로 실행
+    const loadData = async () => {
+      await fetchUsers();
+      await fetchMessages();
+      setIsLoading(false);
+    };
+
+    loadData();
   }, [username]);
 
-  // 선택된 사용자가 변경될 때 해당 대화의 메시지들을 읽음 처리
-  useEffect(() => {
-    if (selectedUser && username && socket && socket.connected) {
-      console.log("👀 채팅방 입장 - 읽음 처리 시작");
-      
-      // 현재 선택된 대화에서 내가 받은 메시지들을 읽음 처리
-      const unreadMessages = messages.filter(msg => 
-        msg.sender_username === selectedUser.username && 
-        msg.receiver_username === username && 
-        !msg.read &&
-        msg.id
-      );
-
-      console.log("📖 읽음 처리할 메시지 수:", unreadMessages.length);
-
-      unreadMessages.forEach(msg => {
-        // 서버에 읽음 처리 알림
-        socket.emit("markAsRead", {
-          messageId: msg.id,
-          readBy: username
-        });
-
-        // 상대방에게 읽음 확인 전송
-        socket.emit("messageRead", {
-          messageId: msg.id,
-          readBy: username,
-          to: selectedUser.username
-        });
-
-        console.log("📖 읽음 처리:", msg.id);
-      });
-
-      // 로컬 상태에서도 읽음 처리
-      if (unreadMessages.length > 0) {
-        setMessages(prev => prev.map(msg => 
-          unreadMessages.some(unread => unread.id === msg.id) 
-            ? { ...msg, read: true } 
-            : msg
-        ));
-      }
-    }
-  }, [selectedUser, username, socket]);  // messages 의존성 제거로 무한 루프 방지
-
+  // 채팅 스크롤 자동 이동
   useEffect(() => {
     if (chatBoxRef.current) {
-      chatBoxRef.current.scrollTo(0, chatBoxRef.current.scrollHeight);
+      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
     }
   }, [messages]);
 
-  const handleSend = async () => {
-    console.log("📨 handleSend 실행", { input, selectedUser, username, name });
+  // 메시지 읽음 상태 확인 함수
+  const getMessageReadStatus = (msg) => {
+    if (!msg || msg.sender_username !== username) {
+      return null; // 내가 보낸 메시지가 아니면 읽음 상태 표시 안함
+    }
+    
+    // 읽음 상태 확인
+    if (msg.read || readMessages.has(msg.id)) {
+      return '읽음';
+    }
+    
+    return '안읽음';
+  };
 
-    if (!input.trim() || !selectedUser || !username || !name) {
+  // 필터링된 메시지 가져오기
+  const getFilteredMessages = () => {
+    if (!selectedUser) {
+      return [];
+    }
+
+    return messages.filter((msg) => {
+      const isMyMessage = msg.sender_username === username && msg.receiver_username === selectedUser.username;
+      const isTheirMessage = msg.receiver_username === username && msg.sender_username === selectedUser.username;
+      return isMyMessage || isTheirMessage;
+    });
+  };
+
+  // 메시지 전송 처리
+  const handleSend = async () => {
+    console.log("📨 handleSend 실행", { 
+      input: input.trim(), 
+      selectedUser, 
+      username, 
+      name,
+      hasFile: !!selectedFile 
+    });
+
+    if ((!input.trim() && !selectedFile) || !selectedUser || !username || !name) {
       console.warn("❌ 메시지 전송 조건 불충족");
       return;
     }
-
-    const msg = {
-      sender_username: username,
-      receiver_username: selectedUser.username,
-      sender_name: name,
-      receiver_name: selectedUser.name, // 받는 사람 이름도 추가
-      content: input.trim(),
-      time: new Date().toISOString(),
-      read: false,
-    };
-
-    console.log("📤 전송할 메시지 데이터:", msg);
+    setInput(""); // 입력창 즉시 클리어
 
     try {
-      // 먼저 HTTP API로 데이터베이스에 저장
-      const response = await axios.post(`${API}/api/messages`, msg);
-      console.log("✅ 서버 응답:", response.data);
+      let response;
       
-      const savedMessage = response.data;
-      
-      // 소켓으로 실시간 전송 (저장된 메시지 정보 포함)
-      if (socket && socket.connected) {
-        console.log("📡 소켓으로 메시지 전송:", savedMessage);
-        socket.emit("message", savedMessage);
+      // 파일 첨부 메시지 전송
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append("sender_username", username);
+        formData.append("receiver_username", selectedUser.username);
+        formData.append("sender_name", name);
+        formData.append("receiver_name", selectedUser.name);
+        formData.append("content", input.trim());
+        formData.append("read", false);
+        formData.append("file", selectedFile);
+
+        response = await axios.post(`${API}/api/messages`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        
+        setSelectedFile(null);
       } else {
-        console.warn("⚠️ 소켓이 연결되지 않음");
+        // 텍스트 메시지 전송
+        response = await axios.post(`${API}/api/messages`, {
+          sender_username: username,
+          receiver_username: selectedUser.username,
+          sender_name: name,
+          receiver_name: selectedUser.name,
+          content: input.trim(),
+          read: false,
+        });
       }
-      
-      setInput("");
-      console.log("✅ 메시지 전송 완료");
-    } catch (err) {
-      console.error("❌ 메시지 전송 오류:", err.response?.data || err.message);
-      alert(`메시지 전송에 실패했습니다: ${err.response?.data?.error || err.message}`);
-    }
 
-    if ((!input.trim() && !selectedFile) || !selectedUser || !username || !name) {
-      return;
-    }
-  
-    const formData = new FormData();
-    formData.append("sender_username", username);
-    formData.append("receiver_username", selectedUser.username);
-    formData.append("sender_name", name);
-    formData.append("receiver_name", selectedUser.name);
-    formData.append("content", input.trim());
-    formData.append("time", new Date().toISOString());
-    formData.append("read", false);
-    
-    if (selectedFile) {
-      formData.append("file", selectedFile);
-    }
-  
-    try {
-      const response = await axios.post(`${API}/api/messages`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
-  
       const savedMessage = response.data;
-  
+      console.log("✅ 서버 응답 메시지:", savedMessage);
+
+
+      // 소켓으로 다른 사용자들에게 전송
       if (socket && socket.connected) {
         socket.emit("message", savedMessage);
+        console.log("📍 수신된 메시지:", savedMessage);
+        console.log("📍 현재 선택된 유저:", selectedUser?.username);
+        console.log("📡 소켓으로 메시지 전송:", savedMessage);
       }
-  
-      setInput("");
-      setSelectedFile(null);
+
     } catch (err) {
-      console.error("❌ 메시지 전송 오류:", err.response?.data || err.message);
-      alert(`메시지 전송 실패: ${err.response?.data?.error || err.message}`);
+      const errorMessage = err?.response?.data?.error || err.message || "알 수 없는 오류";
+      console.error("❌ 메시지 전송 오류:", errorMessage);
+      alert(`메시지 전송 실패: ${errorMessage}`);
     }
   };
 
+  // 키보드 이벤트 처리
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -287,10 +370,12 @@ const Section2 = () => {
     }
   };
 
+  // 검색 데이터 가져오기
   const fetchSearchData = () => {
     console.log("🔍 검색 데이터 가져오기");
   };
 
+  // 로그아웃 처리
   const handleLogout = () => {
     console.log("🚪 로그아웃 처리");
     
@@ -311,22 +396,18 @@ const Section2 = () => {
     navigate("/login");
   };
 
-  // 메시지의 읽음 상태 확인 함수
-  const getMessageReadStatus = (msg) => {
-    const isMine = msg.sender_username === username;
-    
-    if (!isMine) return null; // 내가 보낸 메시지가 아니면 읽음 표시 안함
-    
-    // 메시지 ID가 있고, 읽음 목록에 있거나 메시지 자체에 read 속성이 true인 경우
-    if (msg.id && (readMessages.has(msg.id) || msg.read)) {
-      return "읽음";
+  // 파일 선택 처리
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      console.log("📎 파일 선택됨:", file.name);
     }
-    
-    return "안읽음";
   };
 
   return (
     <div className={styles.container}>
+      {/* 네비게이션 바 */}
       <nav>
         <div className={styles.nav}>
           <div className={styles.logo1}>
@@ -341,6 +422,7 @@ const Section2 = () => {
         </div>
       </nav>
 
+      {/* 검색 컴포넌트 */}
       <Search
         setTheme={setTheme}
         fetchSearchData={fetchSearchData}
@@ -353,21 +435,51 @@ const Section2 = () => {
         handleLogout={handleLogout}
       />
 
+      {/* 메인 채팅 화면 */}
       <div className={styles.chatscreen}>
+        {/* 사용자 목록 */}
         <div className={styles.userList}>
-          <h3>유저 목록</h3>
+          <h3>유저 목록 {users.length > 0 && `(${users.length}명)`}</h3>
+          
           
           {isLoading && <div className={styles.loading}>로딩 중...</div>}
           
           {userListError && (
             <div className={styles.error}>
-              {userListError}
-              <button onClick={() => window.location.reload()}>새로고침</button>
+              <div>{userListError}</div>
+              <button 
+                onClick={() => window.location.reload()}
+                style={{ marginTop: '5px', padding: '5px 10px' }}
+              >
+                새로고침
+              </button>
+              <button 
+                onClick={() => {
+                  setUserListError("");
+                  setIsLoading(true);
+                  // 수동으로 다시 로드
+                  window.location.reload();
+                }}
+                style={{ marginTop: '5px', marginLeft: '5px', padding: '5px 10px' }}
+              >
+                다시 시도
+              </button>
             </div>
           )}
           
           {!isLoading && !userListError && users.length === 0 && (
-            <div className={styles.noUsers}>등록된 다른 사용자가 없습니다.</div>
+            <div className={styles.noUsers}>
+              <div>등록된 다른 사용자가 없습니다.</div>
+              <button 
+                onClick={() => {
+                  console.log("🔄 수동 새로고침 시도");
+                  window.location.reload();
+                }}
+                style={{ marginTop: '10px', padding: '5px 10px', fontSize: '12px' }}
+              >
+                새로고침
+              </button>
+            </div>
           )}
           
           {users.map((user) => {
@@ -377,7 +489,7 @@ const Section2 = () => {
               msg.receiver_username === username && 
               !msg.read
             ).length;
-  
+
             return (
               <div
                 key={user.username}
@@ -397,37 +509,46 @@ const Section2 = () => {
             );
           })}
         </div>
-  
+
+        {/* 채팅 박스 */}
         <div className={styles.chatBox}>
           <div className={styles.chatHeaderContainer}>
             <div className={styles.chatHeader}>
               {selectedUser ? `${selectedUser.name}님과 채팅중` : "채팅할 유저를 선택하세요"}
             </div>
           
+            {/* 메시지 표시 영역 */}
             <div className={styles.messages} ref={chatBoxRef}>
-              {messages
-                .filter(
-                  (msg) =>
-                    selectedUser && (
-                      (msg.sender_username === username && msg.receiver_username === selectedUser.username) ||
-                      (msg.receiver_username === username && msg.sender_username === selectedUser.username)
-                    )
-                )
-                .map((msg, index) => {
+              {(() => {
+                const filteredMessages = getFilteredMessages();
+
+                
+                return filteredMessages.map((msg, index) => {
                   const isMine = msg.sender_username === username;
                   const readStatus = getMessageReadStatus(msg);
 
                   return (
-                    <div key={index} className={isMine ? styles.myMessage : styles.theirMessage}>
-                      {!isMine && <div className={styles.profileIcon}>{msg.sender_name?.[0] || "?"}</div>}
+                    <div 
+                      key={msg.id || index} 
+                      className={isMine ? styles.myMessage : styles.theirMessage}
+                      style={msg.isTemporary ? { opacity: 0.7 } : {}}
+                    >
+                      {!isMine && (
+                        <div className={styles.profileIcon}>
+                          {msg.sender_name?.[0] || "?"}
+                        </div>
+                      )}
                       <div className={styles.bubbleWrapper}>
                         <div className={styles.messageBubble}>
-                          <div className={styles.messageText}>{msg.content}</div>
+                          <div className={styles.messageText}>
+                            {msg.content || '내용 없음'}
+                            {msg.isTemporary && <span style={{fontSize: '12px', color: '#999'}}> (전송중...)</span>}
+                          </div>
                           <div className={styles.messageMeta}>
                             <span className={styles.time}>
                               {msg.time
                                 ? new Date(msg.time).toLocaleTimeString("ko-KR", {
-                                    year:"2-digit",
+                                    year: "2-digit",
                                     hour: "2-digit",
                                     minute: "2-digit",
                                   })
@@ -441,14 +562,19 @@ const Section2 = () => {
                           </div>
                         </div>
                       </div>
-                      {isMine && <div className={styles.profileIcon}>{name?.[0] || "?"}</div>}
+                      {isMine && (
+                        <div className={styles.profileIcon}>
+                          {name?.[0] || "?"}
+                        </div>
+                      )}
                     </div>
                   );
-                })}
+                });
+              })()}
             </div>
           </div>
-  
-          
+
+          {/* 메시지 입력 영역 */}
           <div className={styles.inputBox}>
             <button
               type="button"
@@ -462,9 +588,16 @@ const Section2 = () => {
             <input
               type="file"
               ref={fileInputRef}
-              onChange={(e) => setSelectedFile(e.target.files[0])}
+              onChange={handleFileSelect}
               style={{ display: "none" }}
             />
+
+            {selectedFile && (
+              <div className={styles.selectedFile}>
+                📎 {selectedFile.name}
+                <button onClick={() => setSelectedFile(null)}>×</button>
+              </div>
+            )}
 
             <input
               type="text"
@@ -482,7 +615,6 @@ const Section2 = () => {
               전송
             </button>
           </div>
-
         </div>
       </div>
     </div>

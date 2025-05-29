@@ -5,7 +5,7 @@ import styles from "./main.module.css";
 import Search from "./search";
 import axios from "axios";
 
-function Main({ setTheme , onLogout }) {
+function Main() {
   const isLogtin = sessionStorage.getItem("isAuthenticated");
   if (isLogtin) return <Navigate to="/" replace />;
 
@@ -17,6 +17,9 @@ function Main({ setTheme , onLogout }) {
   const [user, setUser] = useState({ profile_image: "" });
   const [profileImage, setProfileImage] = useState("");
   const navigate = useNavigate();
+    const [theme, setTheme] = useState(() => {
+      return localStorage.getItem("theme") || "light";
+    });
 
   const fetchSearchData = async (query) => {
     setIsLoading(true);
@@ -48,6 +51,12 @@ function Main({ setTheme , onLogout }) {
       .then((res) => setUser(res.data))
       .catch((err) => console.error("유저 정보 가져오기 실패:", err));
   }, []);
+
+    useEffect(() => {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("theme", theme);
+    }, [theme]);
+  
 
   return (
     <div className={styles.body}>

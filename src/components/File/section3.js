@@ -13,11 +13,14 @@ export default function FileUploadPage() {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const inputRef = useRef(null);
   const navigate = useNavigate();
-  const [theme, setTheme] = useState("light");
+   const [theme, setTheme] = useState(() => {
+      return localStorage.getItem("theme") || "light";
+    });
     const [searchResults, setSearchResults] = useState([]);
     const [searchText, setSearchText] = useState("");
     const [showResults, setShowResults] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    
 
   const gotoHome = () => navigate("/main");
   const gotoLink1 = () => navigate("/ChatApp");
@@ -56,6 +59,12 @@ export default function FileUploadPage() {
       alert("업로드 중 오류 발생");
     }
   };
+
+    useEffect(() => {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("theme", theme);
+    }, [theme]);
+  
 
 
   const fetchFiles = async () => {
