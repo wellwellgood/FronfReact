@@ -7,7 +7,6 @@ if (BASE_URL.endsWith("/")) {
   BASE_URL = BASE_URL.slice(0, -1);
 }
 
-console.log("✅ 최종 BASE_URL:", BASE_URL);
 
 const api = axios.create({
   baseURL: BASE_URL,

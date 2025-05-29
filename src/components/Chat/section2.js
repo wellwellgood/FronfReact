@@ -5,6 +5,7 @@ import styles from "./section2.module.css";
 import Search from "../../search";
 import { useNavigate } from "react-router-dom";
 import { FaPaperclip } from "react-icons/fa";
+import { flushSync } from "react-dom";
 
 const Section2 = () => {
   // Socket 관련 상태
@@ -20,6 +21,8 @@ const Section2 = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [readMessages, setReadMessages] = useState(new Set());
+  const tempId = `temp_${Date.now()}`;
+  const now = new Date().toISOString();
   
   // UI 관련 상태
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
@@ -45,7 +48,6 @@ const Section2 = () => {
     const storedName = sessionStorage.getItem("name");
     
     if (storedUsername && storedName) {
-      console.log("✅ 로그인된 사용자:", storedUsername, storedName);
       setUsername(storedUsername);
       setName(storedName);
     } else {
@@ -70,12 +72,10 @@ const Section2 = () => {
     setSocket(newSocket);
 
     newSocket.on("connect", () => {
-      console.log("🔌 소켓 연결됨");
     });
 
     // 새 메시지 수신 (다른 사용자로부터)
     newSocket.on("message", (msg) => {
-      console.log("📨 소켓으로 메시지 수신:", msg);
       
       if (!msg) {
         console.warn("⚠️ 수신된 메시지가 null입니다.");
@@ -84,7 +84,6 @@ const Section2 = () => {
       
       // 내가 보낸 메시지는 이미 handleSend에서 처리했으므로 무시
       if (msg.sender_username === username) {
-        console.log("📤 내가 보낸 메시지 - 소켓에서 무시");
         return;
       }
       
@@ -122,13 +121,16 @@ const Section2 = () => {
       console.log("📖 메시지 읽음 확인:", messageId, readBy);
       setReadMessages(prev => new Set([...prev, messageId]));
       
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId ? { ...msg, read: true } : msg
-      ));
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === tempId
+            ? { ...savedMessage, isTemporary: false }
+            : msg
+        )
+      );
     });
 
     newSocket.on("disconnect", () => {
-      console.log("🔌 소켓 연결 해제됨");
     });
 
     return () => newSocket.disconnect();
@@ -137,28 +139,21 @@ const Section2 = () => {
   // 사용자 목록 및 메시지 로드
   useEffect(() => {
     if (!username) {
-      console.log("⏳ username이 없어서 API 호출 스킵");
       return;
     }
 
-    console.log("📡 API 호출 시작 - username:", username);
     setIsLoading(true);
     setUserListError("");
 
     // 유저 목록 가져오기
     const fetchUsers = async () => {
       try {
-        console.log("🌐 유저 목록 API 호출:", `${API}/api/users`);
         const response = await axios.get(`${API}/api/users`, {
           timeout: 10000, // 10초 타임아웃
           headers: {
             'Content-Type': 'application/json',
           }
         });
-        
-        console.log("📋 유저 목록 전체 응답:", response);
-        console.log("📋 유저 목록 데이터:", response.data);
-        console.log("📋 응답 상태:", response.status);
         
         if (response.status === 200) {
           let userList = [];
@@ -175,10 +170,8 @@ const Section2 = () => {
             userList = [];
           }
           
-          console.log("🔍 파싱된 유저 목록:", userList);
           
           const filteredUsers = userList.filter((u) => u && u.username && u.username !== username);
-          console.log("✅ 필터링된 유저 목록:", filteredUsers);
           
           setUsers(filteredUsers);
           
@@ -217,7 +210,6 @@ const Section2 = () => {
     // 메시지 목록 가져오기
     const fetchMessages = async () => {
       try {
-        console.log("💬 메시지 목록 API 호출:", `${API}/api/messages`);
         const response = await axios.get(`${API}/api/messages`, {
           timeout: 10000,
           headers: {
@@ -225,7 +217,6 @@ const Section2 = () => {
           }
         });
         
-        console.log("💬 메시지 목록 응답:", response.data);
         
         let messageList = [];
         if (Array.isArray(response.data)) {
@@ -243,10 +234,8 @@ const Section2 = () => {
           read: msg.read || false,
         }));
         
-        console.log("🔄 처리된 메시지 목록:", processedMessages);
         setMessages(processedMessages);
       } catch (err) {
-        console.error("❌ 메시지 목록 오류:", err.response?.data || err.message);
         // 메시지 로드 실패는 심각하지 않으므로 빈 배열로 설정
         setMessages([]);
       }
@@ -261,13 +250,6 @@ const Section2 = () => {
 
     loadData();
   }, [username]);
-
-  // 채팅 스크롤 자동 이동
-  useEffect(() => {
-    if (chatBoxRef.current) {
-      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
-    }
-  }, [messages]);
 
   // 메시지 읽음 상태 확인 함수
   const getMessageReadStatus = (msg) => {
@@ -298,24 +280,43 @@ const Section2 = () => {
 
   // 메시지 전송 처리
   const handleSend = async () => {
-    console.log("📨 handleSend 실행", { 
-      input: input.trim(), 
-      selectedUser, 
-      username, 
-      name,
-      hasFile: !!selectedFile 
-    });
-
+  
     if ((!input.trim() && !selectedFile) || !selectedUser || !username || !name) {
       console.warn("❌ 메시지 전송 조건 불충족");
       return;
     }
-    setInput(""); // 입력창 즉시 클리어
-
+  
+    const tempId = `temp_${Date.now()}`;
+    const now = new Date().toISOString();
+  
+    const tempMessage = {
+      id: tempId,
+      sender_username: username,
+      receiver_username: selectedUser.username,
+      sender_name: name,
+      receiver_name: selectedUser.name,
+      content: input.trim(),
+      read: false,
+      time: now,
+      isTemporary: true,
+    };
+  
+    // ✅ 즉시 채팅창에 표시
+    flushSync(() => {
+      setMessages((prev) => [...prev, tempMessage]);
+    });
+    setInput("");
+    
+    // ✅ 스크롤 보장
+    setTimeout(() => {
+      if (chatBoxRef.current) {
+        chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+      }
+    }, 0);
+  
     try {
       let response;
-      
-      // 파일 첨부 메시지 전송
+  
       if (selectedFile) {
         const formData = new FormData();
         formData.append("sender_username", username);
@@ -325,14 +326,13 @@ const Section2 = () => {
         formData.append("content", input.trim());
         formData.append("read", false);
         formData.append("file", selectedFile);
-
+  
         response = await axios.post(`${API}/api/messages`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        
+  
         setSelectedFile(null);
       } else {
-        // 텍스트 메시지 전송
         response = await axios.post(`${API}/api/messages`, {
           sender_username: username,
           receiver_username: selectedUser.username,
@@ -342,27 +342,29 @@ const Section2 = () => {
           read: false,
         });
       }
-
+  
       const savedMessage = response.data;
-      console.log("✅ 서버 응답 메시지:", savedMessage);
-
-      setMessages(prev => [...prev, savedMessage]);
-
-
-      // 소켓으로 다른 사용자들에게 전송
+  
+      // ✅ 임시 메시지를 실제 메시지로 교체
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === tempId ? savedMessage : msg))
+      );
+  
+      // ✅ 소켓 브로드캐스트
       if (socket && socket.connected) {
         socket.emit("message", savedMessage);
-        console.log("📍 수신된 메시지:", savedMessage);
-        console.log("📍 현재 선택된 유저:", selectedUser?.username);
-        console.log("📡 소켓으로 메시지 전송:", savedMessage);
       }
-
     } catch (err) {
-      const errorMessage = err?.response?.data?.error || err.message || "알 수 없는 오류";
-      console.error("❌ 메시지 전송 오류:", errorMessage);
-      alert(`메시지 전송 실패: ${errorMessage}`);
+      console.error("❌ 메시지 전송 실패:", err.response?.data || err.message);
+      alert("메시지 전송 실패");
+  
+      // ❗ 실패한 임시 메시지 제거 또는 회색 처리 유지
+      setMessages((prev) => prev.map((msg) =>
+        msg.id === tempId ? { ...msg, content: "(전송 실패)", failed: true } : msg
+      ));
     }
   };
+  
 
   // 키보드 이벤트 처리
   const handleKeyPress = (e) => {
@@ -497,7 +499,6 @@ const Section2 = () => {
                 key={user.username}
                 className={`${styles.userItem} ${selectedUser?.username === user.username ? styles.selected : ""}`}
                 onClick={() => {
-                  console.log("✅ 선택된 유저:", user);
                   setSelectedUser(user);
                 }}
               >
@@ -533,7 +534,6 @@ const Section2 = () => {
                     <div 
                       key={msg.id || index} 
                       className={isMine ? styles.myMessage : styles.theirMessage}
-                      style={msg.isTemporary ? { opacity: 0.7 } : {}}
                     >
                       {!isMine && (
                         <div className={styles.profileIcon}>
@@ -544,7 +544,6 @@ const Section2 = () => {
                         <div className={styles.messageBubble}>
                           <div className={styles.messageText}>
                             {msg.content || '내용 없음'}
-                            {msg.isTemporary && <span style={{fontSize: '12px', color: '#999'}}> (전송중...)</span>}
                           </div>
                           <div className={styles.messageMeta}>
                             <span className={styles.time}>
