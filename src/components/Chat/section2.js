@@ -517,7 +517,7 @@ const Section2 = () => {
         <div className={styles.chatBox}>
           <div className={styles.chatHeaderContainer}>
             <div className={styles.chatHeader}>
-              {selectedUser ? `${selectedUser.name}님과 채팅중` : "채팅할 유저를 선택하세요"}
+              {selectedUser ? `${selectedUser.name}님과 채팅중...` : "채팅할 유저를 선택하세요"}
             </div>
           
             {/* 메시지 표시 영역 */}

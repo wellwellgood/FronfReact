@@ -81,7 +81,7 @@ nav {
 .navmenu li::after {
   content: '';
   position: absolute;
-  background: var(--gradient-start);
+  background: rgba(255,255,255, 1);
   width: 0;
   height: 50px;
   border-radius: 15px;
@@ -92,7 +92,7 @@ nav {
 
 .navmenu li:hover::after {
   width: 150px;
-  background: var(--hover-bg);
+  background: rgba(85, 224, 163, 0.4);;
 }
 
 .navmenu li a {
@@ -163,7 +163,6 @@ nav {
   background-color: var(--hover-bg);
   border-color: var(--accent-color);
   color: var(--accent-color);
-  font-weight: 600;
 }
 
 .chatBox {
@@ -436,8 +435,21 @@ nav {
   height: 100%;
   padding: 10px;
   overflow-y: scroll;
+  padding-right: 12px;
 }
-
+.chatHeaderContainer::-webkit-scrollbar{
+  width: 6px;
+}
+.chatHeaderContainer::-webkit-scrollbar-track{
+  background: var(--accent-color);
+  border-radius: 10px;
+  border-right: 5px solid transparent;
+  /* background-clip: padding-box; */
+}
+.chatHeaderContainer::-webkit-scrollbar-thumb{
+  background: var(--accent-color);
+  border-radius: 10px;
+}
 input[type="file"]{
   width: 100px;
   border-radius: 0px;
