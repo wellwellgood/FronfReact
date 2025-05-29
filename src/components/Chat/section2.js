@@ -346,6 +346,8 @@ const Section2 = () => {
       const savedMessage = response.data;
       console.log("✅ 서버 응답 메시지:", savedMessage);
 
+      setMessages(prev => [...prev, savedMessage]);
+
 
       // 소켓으로 다른 사용자들에게 전송
       if (socket && socket.connected) {
