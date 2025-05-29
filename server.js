@@ -12,15 +12,17 @@ const messageRoutes = require("./routes/message.js");
 const uploadRoutes = require("./routes/uploadRouter.js");
 const chatRoutes = require("./chatLog/logs.js");
 const socket = require("./socket.js");
+const userRoutes = require("./routes/user.js");
 
 const app = express();
 const server = http.createServer(app);
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 10000;
 
 // 미들웨어
 app.use(corsMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/api/users", userRoutes);
 
 // DB 연결이 실패할 경우 대체 응답을 제공하는 미들웨어
 let dbConnected = false;
