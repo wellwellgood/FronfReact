@@ -78,7 +78,6 @@ const Membership = () => {
 
   return (
     <div className={styles.findID}>
-      <div className={styles.img}></div>
       <form className={styles.IDform} onSubmit={handleSubmit}>
         <div className={styles.IDarea}>
           <h1>회원가입</h1>

@@ -147,10 +147,15 @@ nav {
   font-size: 15px;
   z-index: 10;
 }
+.userList h3{
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--accent-color);
+}
 
 /* 유저 항목 스타일 */
 .userItem {
   padding: 10px 12px;
+  margin-top: 10px;
   margin-bottom: 10px;
   background-color: var(--card-bg);
   border-radius: 12px;

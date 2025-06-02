@@ -10,13 +10,20 @@ function LoginPage() {
   const [PWvalid, setPWvalid] = useState(false);
   const [notAllow, setNotAllow] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [userNaame, setUserName] = useState("");
+  const [saveID, setSaveID] = useState(false);
 
   const goToid = () => navigate("/id");
   const goToPassword = () => navigate("/password");
   const goToMembership = () => navigate("/membership");
 
   useEffect(() => {
-    console.log("✅ sessionStorage userId:", sessionStorage.getItem("userId"));
+    const saved = localStorage.getItem("saveID");
+    if (saved) {
+      setId(saved);
+      setSaveID(true);
+    }
+
     const handleBeforeUnload = () => {
       sessionStorage.clear();
     };
@@ -56,16 +63,22 @@ function LoginPage() {
       const { accessToken } = response.data;
       sessionStorage.setItem("userToken", accessToken);
       sessionStorage.setItem("userId", ID);
-      sessionStorage.setItem("username", ID); // ✅ username 저장
       sessionStorage.setItem("username", response.data.username);
       sessionStorage.setItem("name", response.data.name);
-      alert("로그인 성공!");
+
+      // ✅ 아이디 저장 처리
+      if (saveID) {
+        localStorage.setItem("saveID", ID);
+      } else {
+        localStorage.removeItem("saveID");
+      }
+
       navigate("/main");
     } catch (error) {
       if (error.response?.data?.message) {
         alert(error.response.data.message);
       } else {
-        alert("로그인 중 오류가 발생했습니다.");
+        alert("아이디 및 비밀번호를 재확인 바랍니다.\n비밀번호는 대소문자를 포함한 8자리 이상입니다.");
       }
     }
   };
@@ -78,11 +91,47 @@ function LoginPage() {
             <div className={styles.logo}></div>
             <h1 className={styles.text}>LOGIN</h1>
             <div className={styles.loginbox}>
-              <input className={styles.id} type="text" placeholder="ID" value={ID} onChange={HandleID} />
-              <input className={styles.pw} type="password" placeholder="Password" value={PW} onChange={HandlePW} onKeyDown={handleKeyDown} />
+              <input
+                className={styles.id}
+                type="text"
+                placeholder="ID"
+                value={ID}
+                onChange={HandleID}
+              />
+              <input
+                className={styles.pw}
+                type="password"
+                placeholder="Password"
+                value={PW}
+                onChange={HandlePW}
+                onKeyDown={handleKeyDown}
+              />
             </div>
-            {errorMessage && <p className={styles["error-message"]}>{errorMessage}</p>}
-            <button className={styles.linkpage} onClick={loginButton} disabled={!PWvalid || notAllow}><h2>Login</h2></button>
+
+            {/* ✅ 아이디 저장 체크박스 */}
+            <div className={styles.saveID}>
+              <label className={styles.saveIDlabel}>
+                <input
+                  type="checkbox"
+                  checked={saveID}
+                  onChange={(e) => setSaveID(e.target.checked)}
+                />
+                <span className={styles.saveIDtext}> 아이디 저장하기</span>
+              </label>
+            </div>
+
+            {errorMessage && (
+              <p className={styles["error-message"]}>{errorMessage}</p>
+            )}
+
+            <button
+              className={styles.linkpage}
+              onClick={loginButton}
+              disabled={!PWvalid || notAllow}
+            >
+              <h2>Login</h2>
+            </button>
+
             <div className={styles.findbox}>
               <button className={styles.findbtn} onClick={goToid}>아이디 찾기</button>
               <button className={styles.findbtn} onClick={goToPassword}>비밀번호 찾기</button>

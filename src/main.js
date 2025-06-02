@@ -17,9 +17,9 @@ function Main() {
   const [user, setUser] = useState({ profile_image: "" });
   const [profileImage, setProfileImage] = useState("");
   const navigate = useNavigate();
-    const [theme, setTheme] = useState(() => {
-      return localStorage.getItem("theme") || "light";
-    });
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem("theme") || "light";
+  });
 
   const fetchSearchData = async (query) => {
     setIsLoading(true);

@@ -1,30 +1,23 @@
-import React, { useState, useRef , useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useRef, useState, useEffect } from "react";
 import emailjs from "@emailjs/browser";
 import styles from "./AA/email.js/SendEmail.module.css";
 import Search from "../../search";
-export default function Section4SendEmail() {
+import { useNavigate } from "react-router-dom";
+
+const Section4 = () => {
   const navigate = useNavigate();
   const form = useRef();
-  const [text, setText] = useState("");
+  const fileInputRef = useRef(null);
+
   const [agree, setAgree] = useState(false);
-    const [theme, setTheme] = useState(() => {
-      return localStorage.getItem("theme") || "light";
-    });
   const [searchResults, setSearchResults] = useState([]);
   const [searchText, setSearchText] = useState("");
-  const [showResults, setShowResults] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem("theme") || "light";
+  });
   const [isLoading, setIsLoading] = useState(false);
-  const fetchSearchData = () => {};
-  const handleLogout = () => {};
-  
-  
-  
-  const handleSearchChange = (e) => setText(e.target.value);
-
-  const handleCheckboxChange = (e) => {
-    setAgree(e.target.checked);
-  };
+  const [showResults, setShowResults] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -35,43 +28,67 @@ export default function Section4SendEmail() {
 
     emailjs
       .sendForm(
-        "service_a9udeim", // 자신의 emailjs 서비스 ID
-        "template_3nu35ld", // 자신의 emailjs 템플릿 ID
+        "YOUR_SERVICE_ID",
+        "YOUR_TEMPLATE_ID",
         form.current,
-        "s9Hb7DTTLBcp34TPu" // 자신의 emailjs 사용자 키
+        "YOUR_PUBLIC_KEY"
       )
       .then(
-        (result) => {
-          console.log(result.text);
-          alert("이메일이 성공적으로 전송되었습니다!");
-          navigate("/main");
+        () => {
+          alert("이메일이 성공적으로 전송되었습니다.");
+          form.current.reset();
+          setAgree(false);
+          setSelectedFiles([]); // 파일 초기화
         },
         (error) => {
-          console.error(error.text);
-          alert("이메일 전송 중 오류 발생");
+          alert("이메일 전송에 실패했습니다. 다시 시도해주세요.");
+          console.error("EmailJS Error:", error);
         }
       );
   };
-    useEffect(() => {
-      document.documentElement.setAttribute("data-theme", theme);
-      localStorage.setItem("theme", theme);
-    }, [theme]);
+
+  const fetchSearchData = () => {
+    console.log("🔍 검색 데이터 가져오기");
+  };
+
+  const handleLogout = () => {
+    console.log("🚪 로그아웃 처리");
+    sessionStorage.removeItem("username");
+    sessionStorage.removeItem("name");
+
+    navigate("/login");
+  };
+
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      setSelectedFiles(files);
+      console.log("파일 선택됨:", files.map((f) => f.name).join(", "));
+    }
+  };
+
+  const handleRemoveFile = (index) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   return (
-    <div className={styles.body}>
+    <div className={styles.container}>
       <nav>
         <div className={styles.nav}>
           <div className={styles.logo1}>
             <h2>Logo</h2>
-            <span></span>
           </div>
           <ul className={styles.navmenu}>
-            <li className={styles.homebtn}><button className={styles.button} onClick={() => navigate("/main")}>Home</button></li>
-            <li className={styles.infobtn}><button className={styles.button} onClick={() => navigate("/ChatApp")}>Chat</button></li>
-            <li className={styles.filebtn}><button className={styles.button} onClick={() => navigate("/file")}>File</button></li>
-            <li className={styles.emailbtn}><button onClick={() => navigate("/sendEmail")}>Email</button></li>
+            <li><button onClick={() => navigate("/main")}>Home</button></li>
+            <li><button onClick={() => navigate("/ChatApp")}>Chat</button></li>
+            <li><button onClick={() => navigate("/file")}>File</button></li>
+            <li><button onClick={() => navigate("/sendEmail")}>Email</button></li>
           </ul>
-          {/* <div className={styles.setting}><Link to="/">Setting</Link></div> */}
         </div>
       </nav>
 
@@ -86,57 +103,113 @@ export default function Section4SendEmail() {
         setShowResults={setShowResults}
         handleLogout={handleLogout}
       />
-      
-      <div className={styles.topbar}>
-        <div className={styles.search}>
+
+      <form ref={form} onSubmit={handleSubmit} className={styles.mailform}>
+        <div className={styles.inputGroup}>
+          <label htmlFor="user_send_name">보낸 사람 이메일</label>
           <input
-            type="text"
-            value={text}
-            className={styles.searchbox}
-            onChange={handleSearchChange}
-            placeholder="  Search..."
-          />
-        </div>
-        <div className={styles.user}>
-          <button className={styles.logout} onClick={() => navigate("/")}>
-            로그아웃
-          </button>
-        </div>
-      </div>
-      <div className={styles.container}>
-        <h2>이메일 보내기</h2>
-        <form ref={form} onSubmit={handleSubmit}>
-      <div className={styles.send}>
-        <div>
-          <label>보낸 사람 이름:</label>
-          <input name="user_name" type="text" placeholder="이름" required />
-        </div>
-        <div>
-          <label>받는 사람 이메일:</label>
-          <input name="user_email" type="email" placeholder="이메일 주소" required />
-        </div>
-      </div>
-      <div className={styles.privacyBox}>
-        <p className={styles.privacyText}>
-          본인은 개인정보 보호법 제15조에 따라 본인의 이메일 정보를 제공하는 것에 동의합니다.
-        </p>
-        <label className={styles.checkboxLine}>
-          <input
-            type="checkbox"
-            checked={agree}
-            onChange={(e) => setAgree(e.target.checked)}
+            id="user_send_name"
+            name="user_send_name"
+            type="email"
+            placeholder="이메일 주소"
             required
           />
-          <span>개인정보 수집 및 이용에 동의합니다. (필수)</span>
-        </label>
-      </div>
-      <div className="textbtn">
-        {/* <label>내용:</label> */}
-        <textarea name="message" placeholder="내용을 입력하세요" width="500" height="500" required></textarea>
-      </div>
-      <button type="submit">전송</button>
-    </form>
-      </div>
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label htmlFor="user_accept_email">받는 사람 이메일</label>
+          <input
+              id="user_accept_email"
+              name="user_accept_email"
+              type="text"
+              placeholder="이메일 주소"
+              required
+            />
+        </div>
+        
+        <div className={styles.inputGroup}>
+          <label htmlFor="subject">제목</label>
+          <input
+            id="subject"
+            name="subject"
+            type="text"
+            placeholder="제목"
+            required
+          >
+          </input>
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label htmlFor="File_upload">파일첨부</label>
+          <button
+            type="button"
+            className={styles.fileButton}
+            onClick={() => fileInputRef.current.click()}
+            title="파일 첨부"
+          >
+            {selectedFiles.length === 0 && (
+              <span className={styles.fileText}>
+                <span className={styles.PC}>내 PC</span>의 <span className={styles.PC}>&nbsp;파일</span>&nbsp;을 선택해주세요.
+              </span>
+            )}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              style={{ display: "none" }}
+              multiple
+            />
+            {selectedFiles.length > 0 && (
+              <div className={styles.selectedFileList}>
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className={styles.selectedFile}>
+                    {file.name}
+                    <button
+                      type="button"
+                      className={styles.closeButton}
+                      onClick={() => handleRemoveFile(index)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </button>
+        </div>
+
+        <div className={styles.privacyBox}>
+          <p className={styles.privacyText}>
+            본인은 개인정보 보호법 제15조에 따라 본인의 이메일 정보를 제공하는 것에 동의합니다.
+          </p>
+          <label className={styles.checkboxLine}>
+            <input
+              type="checkbox"
+              checked={agree}
+              onChange={(e) => setAgree(e.target.checked)}
+              required
+            />
+            <span>개인정보 수집 및 이용에 동의합니다. (필수)</span>
+          </label>
+        </div>
+
+        <div className={styles.textAreaBox}>
+          <input
+            name="message"
+            placeholder="내용을 입력하세요"
+            className={styles.textArea}
+            required
+          ></input>
+          <button 
+          type="submit"
+          className={styles.submitButton}
+          >
+          전송
+        </button>
+        </div>
+      </form>
     </div>
   );
-}
+};
+
+export default Section4;

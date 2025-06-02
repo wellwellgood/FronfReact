@@ -79,7 +79,7 @@ nav {
 .navmenu li::after {
   content: '';
   position: absolute;
-  background: var(--gradient-start);
+  background: rgba(255, 255, 255, 1);
   width: 0;
   height: 50px;
   border-radius: 15px;
@@ -90,7 +90,7 @@ nav {
 
 .navmenu li:hover::after {
   width: 150px;
-  background: var(--hover-bg);
+  background: rgba(85, 224, 163, 0.4);
 }
 
 .navmenu li a {
@@ -102,80 +102,162 @@ nav {
 }
 
 .container {
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    width: 763px;
-    height: 471px;
-    border-radius: 0 0 21px 21px;
-  }
-  
-  .form {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .input_container {
-    position: relative;
-    height: 40px;
-    border-bottom: 1px solid #e0e0e0;
-    padding: 0 40px;
-    text-align: right;
-    /* background-color: aquamarine; */
-    box-sizing: border-box;
-  }
-  
-  .form label {
-    width: 100px;
-    margin-left: 5px;
-    line-height: 40px;
-  }
-  
-  .input_text {
-    box-sizing: border-box;
-    width: 600px;
-    height: 35px;
-    /* position: absolute; */
-    right: 0;
-    margin-left: 10px;
-    border: none;
-    outline: none;
-  }
-  
-  .form span {
-    font-size: 12px;
-    margin-top: 15px;
-    margin-left: 50px;
-  }
-  
-  .agree {
-    background-color: #e0e0e0;
-    font-size: 12px;
-    box-sizing: border-box;
-    margin: 10px 50px;
-    padding: 10px 20px;
-    border-radius: 5px;
-  }
-  
-  .input_checkbox {
-    margin-left: 10px;
-    width: 12px;
-    height: 12px;
-  }
-  
-  textarea {
-    outline: none;
-    margin: 10px 40px 20px 40px;
-    height: 140px;
-    border: 1px solid #e0e0e0;
-    padding: 10px;
-  }
-  
-  .button_container {
-    text-align: center;
-    /* background-color: aquamarine; */
-  }
+  position: relative;
+  background-color: #ffffff;
+  color: #000000;
+  overflow-y: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.mailform{
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-direction: column;
+  position: absolute;
+  top: 52.5px;
+  right: 0;
+  width: calc(100% - 200px);
+  height: 100%;
+  overflow: hidden;
+  padding: 20px;
+}
+
+/* 스크롤바 */
+.container::-webkit-scrollbar {
+  width: 10px;
+}
+.container::-webkit-scrollbar-thumb {
+  background-color: #444;
+  border-left: 4px solid transparent;
+  background-clip: padding-box;
+  border-radius: 6px;
+}
+.container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+/* 인풋 그룹 (레이블+입력) */
+.inputGroup {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  width: 100%;
+}
+
+.inputGroup label {
+  width: 100px;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 6px;
+  color: #000;
+}
+
+.inputGroup input {
+  width: calc(90% - 40px);
+  height: 36px;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+/* 텍스트 영역 */
+.textAreaBox {
+  width: 100%;
+  height: 20%;
+  margin-top: 20px;
+  width: 80%;
+}
+
+.textArea {
+  width: 100%;
+  height: 200%;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  resize: vertical;
+}
+
+/* 개인정보동의 */
+.privacyBox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  background-color: #f1f1f1;
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 20px;
+  gap: 20px;
+}
+
+.privacyText {
+  font-size: 13px;
+  color: #333;
+}
+
+.checkboxLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #000;
+}
+.FileBox{
+  width: 80%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-direction: row;
+}
+.File{
+  width: 40px;
+  height: 40px;
+}
+.fileButton{
+  width: calc(90% - 40px);
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+.fileText{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  color: #000;
+}
+.PC{
+  font-weight: 600;
+  color: #007bff;
+}
+.selectedFile{
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  width: 60%;
+  margin-left: 40%;
+}
+/* 전송 버튼 */
+.submitButton {
+  position: relative;
+  width: 160px;
+  height: 40px;
+  color: white;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background-color: #007bff;
+  border-radius: 6px;
+  margin: 10px 50%;
+}
+
+.submitButton:hover {
+  background-color: #0056b3;
+}

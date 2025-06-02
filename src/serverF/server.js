@@ -23,6 +23,7 @@ app.use(corsMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/users", userRoutes);
+app.use("/api/auth", authRoutes);
 
 // DB 연결이 실패할 경우 대체 응답을 제공하는 미들웨어
 let dbConnected = false;

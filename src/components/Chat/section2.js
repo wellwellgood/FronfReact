@@ -8,6 +8,9 @@ import { FaPaperclip } from "react-icons/fa";
 import { flushSync } from "react-dom";
 
 const Section2 = () => {
+  // Navigate 훅을 먼저 선언
+  const navigate = useNavigate();
+  
   // Socket 관련 상태
   const [socket, setSocket] = useState(null);
   
@@ -21,8 +24,6 @@ const Section2 = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [readMessages, setReadMessages] = useState(new Set());
-  const tempId = `temp_${Date.now()}`;
-  const now = new Date().toISOString();
   
   // UI 관련 상태
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
@@ -38,7 +39,6 @@ const Section2 = () => {
   // Refs
   const chatBoxRef = useRef(null);
   const fileInputRef = useRef(null);
-  const navigate = useNavigate();
 
   const API = "https://react-server-wmqa.onrender.com";
 
@@ -51,8 +51,14 @@ const Section2 = () => {
       setUsername(storedUsername);
       setName(storedName);
     } else {
-      console.warn("❌ 세션 저장소에 username 또는 name 없음");
-      navigate("/login");
+      console.warn("세션 저장소에 username 또는 name 없음");
+      // navigate가 정의되어 있는지 확인
+      if (navigate) {
+        navigate("/login");
+      } else {
+        // navigate가 없으면 window.location 사용
+        window.location.href = "/login";
+      }
     }
   }, [navigate]);
 
@@ -72,11 +78,11 @@ const Section2 = () => {
     setSocket(newSocket);
 
     newSocket.on("connect", () => {
+      console.log("소켓 연결됨");
     });
 
     // 새 메시지 수신 (다른 사용자로부터)
     newSocket.on("message", (msg) => {
-      
       if (!msg) {
         console.warn("⚠️ 수신된 메시지가 null입니다.");
         return;
@@ -123,14 +129,15 @@ const Section2 = () => {
       
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === tempId
-            ? { ...savedMessage, isTemporary: false }
+          msg.id === messageId
+            ? { ...msg, read: true, isTemporary: false }
             : msg
         )
       );
     });
 
     newSocket.on("disconnect", () => {
+      console.log("소켓 연결 해제됨");
     });
 
     return () => newSocket.disconnect();
@@ -169,7 +176,6 @@ const Section2 = () => {
             console.warn("⚠️ 예상치 못한 응답 형식:", response.data);
             userList = [];
           }
-          
           
           const filteredUsers = userList.filter((u) => u && u.username && u.username !== username);
           
@@ -217,7 +223,6 @@ const Section2 = () => {
           }
         });
         
-        
         let messageList = [];
         if (Array.isArray(response.data)) {
           messageList = response.data;
@@ -237,6 +242,7 @@ const Section2 = () => {
         setMessages(processedMessages);
       } catch (err) {
         // 메시지 로드 실패는 심각하지 않으므로 빈 배열로 설정
+        console.error("메시지 로드 실패:", err);
         setMessages([]);
       }
     };
@@ -280,15 +286,14 @@ const Section2 = () => {
 
   // 메시지 전송 처리
   const handleSend = async () => {
-  
     if ((!input.trim() && !selectedFile) || !selectedUser || !username || !name) {
       console.warn("❌ 메시지 전송 조건 불충족");
       return;
     }
-  
+
     const tempId = `temp_${Date.now()}`;
     const now = new Date().toISOString();
-  
+
     const tempMessage = {
       id: tempId,
       sender_username: username,
@@ -300,7 +305,7 @@ const Section2 = () => {
       time: now,
       isTemporary: true,
     };
-  
+
     // ✅ 즉시 채팅창에 표시
     flushSync(() => {
       setMessages((prev) => [...prev, tempMessage]);
@@ -313,10 +318,10 @@ const Section2 = () => {
         chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
       }
     }, 0);
-  
+
     try {
       let response;
-  
+
       if (selectedFile) {
         const formData = new FormData();
         formData.append("sender_username", username);
@@ -326,11 +331,11 @@ const Section2 = () => {
         formData.append("content", input.trim());
         formData.append("read", false);
         formData.append("file", selectedFile);
-  
+
         response = await axios.post(`${API}/api/messages`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-  
+
         setSelectedFile(null);
       } else {
         response = await axios.post(`${API}/api/messages`, {
@@ -342,14 +347,14 @@ const Section2 = () => {
           read: false,
         });
       }
-  
+
       const savedMessage = response.data;
-  
+
       // ✅ 임시 메시지를 실제 메시지로 교체
       setMessages((prev) =>
         prev.map((msg) => (msg.id === tempId ? savedMessage : msg))
       );
-  
+
       // ✅ 소켓 브로드캐스트
       if (socket && socket.connected) {
         socket.emit("message", savedMessage);
@@ -357,14 +362,13 @@ const Section2 = () => {
     } catch (err) {
       console.error("❌ 메시지 전송 실패:", err.response?.data || err.message);
       alert("메시지 전송 실패");
-  
+
       // ❗ 실패한 임시 메시지 제거 또는 회색 처리 유지
       setMessages((prev) => prev.map((msg) =>
         msg.id === tempId ? { ...msg, content: "(전송 실패)", failed: true } : msg
       ));
     }
   };
-  
 
   // 키보드 이벤트 처리
   const handleKeyPress = (e) => {
@@ -385,6 +389,7 @@ const Section2 = () => {
     
     sessionStorage.removeItem("username");
     sessionStorage.removeItem("name");
+    sessionStorage.clear();
     
     if (socket) {
       socket.disconnect();
@@ -397,7 +402,17 @@ const Section2 = () => {
     setSelectedUser(null);
     setReadMessages(new Set());
     
-    navigate("/login");
+    // navigate 사용 시도, 실패하면 window.location 사용
+    try {
+      if (navigate) {
+        navigate("/login");
+      } else {
+        window.location.href = "/login";
+      }
+    } catch (error) {
+      console.error("네비게이션 오류:", error);
+      window.location.href = "/login";
+    }
   };
 
   // 파일 선택 처리
@@ -406,6 +421,20 @@ const Section2 = () => {
     if (file) {
       setSelectedFile(file);
       console.log("📎 파일 선택됨:", file.name);
+    }
+  };
+
+  // 네비게이션 핸들러들
+  const handleNavigation = (path) => {
+    try {
+      if (navigate) {
+        navigate(path);
+      } else {
+        window.location.href = path;
+      }
+    } catch (error) {
+      console.error("네비게이션 오류:", error);
+      window.location.href = path;
     }
   };
 
@@ -418,10 +447,10 @@ const Section2 = () => {
             <h2>Logo</h2>
           </div>
           <ul className={styles.navmenu}>
-            <li><button onClick={() => navigate("/main")}>Home</button></li>
-            <li><button onClick={() => navigate("/ChatApp")}>Chat</button></li>
-            <li><button onClick={() => navigate("/file")}>File</button></li>
-            <li><button onClick={() => navigate("/sendEmail")}>Email</button></li>
+            <li><button onClick={() => handleNavigation("/main")}>Home</button></li>
+            <li><button onClick={() => handleNavigation("/ChatApp")}>Chat</button></li>
+            <li><button onClick={() => handleNavigation("/file")}>File</button></li>
+            <li><button onClick={() => handleNavigation("/sendEmail")}>Email</button></li>
           </ul>
         </div>
       </nav>
@@ -444,7 +473,6 @@ const Section2 = () => {
         {/* 사용자 목록 */}
         <div className={styles.userList}>
           <h3>유저 목록 {users.length > 0 && `(${users.length}명)`}</h3>
-          
           
           {isLoading && <div className={styles.loading}>로딩 중...</div>}
           
@@ -525,7 +553,6 @@ const Section2 = () => {
               {(() => {
                 const filteredMessages = getFilteredMessages();
 
-                
                 return filteredMessages.map((msg, index) => {
                   const isMine = msg.sender_username === username;
                   const readStatus = getMessageReadStatus(msg);
@@ -580,7 +607,7 @@ const Section2 = () => {
             <button
               type="button"
               className={styles.fileButton}
-              onClick={() => fileInputRef.current.click()}
+              onClick={() => fileInputRef.current?.click()}
               title="파일 첨부"
             >
               <FaPaperclip size={20} />
