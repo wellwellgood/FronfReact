@@ -104,31 +104,6 @@ nav {
   z-index: 9;
 }
   
-  .setting {
-    position: absolute;
-    bottom: 40px;
-    left: 20px;
-  }
-  
-  .setting a {
-    color: #1f2937;
-    text-decoration: none;
-    font-size: 16px;
-  }
-  
-  .setting::before{
-    content: '';
-    background-image: url(../../image/setting.png);
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    border-radius: 100%;
-    width: 30px;
-    height: 30px;
-    /* margin:0 10px; */
-    z-index: 9;
-  }
-  
   /* =============== Topbar =============== */
   .topbar {
     position: absolute;

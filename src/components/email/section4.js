@@ -6,6 +6,7 @@ import emailjs from "@emailjs/browser";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { initializeApp } from "firebase/app";
 import styles from "./AA/email.js/SendEmail.module.css"
+import AccountSetting from '../../AccountSetting';
 
 // 🔧 Firebase 설정
 const firebaseConfig = {
@@ -21,10 +22,22 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const storage = getStorage(app);
 
+
 const FirebaseEmailForm = () => {
   const form = useRef();
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showResults, setShowResults] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState({ profile_image: "" });
+  const [profileImage, setProfileImage] = useState("");
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
+  const [showSettings, setShowSettings] = useState(false);
+
+  const username = sessionStorage.getItem("username");
+  const isLogtin = sessionStorage.getItem("isAuthenticated");
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -70,58 +83,117 @@ const FirebaseEmailForm = () => {
     }
   };
 
-  return (
-    <form ref={form} onSubmit={handleSubmit} className={styles.mailform}>
-      
-      <div className={styles.inputGroup}>
-        <input
-          type="email"
-          name="user_email"
-          placeholder="받는 사람 이메일"
-          required
-          className={styles.input}
+  const handleLogout = () => {
+    sessionStorage.clear();
+    alert("로그아웃 되었습니다.");
+    navigate("/");
+  };
+
+  useEffect(() => {
+    const img = sessionStorage.getItem("profileImage");
+
+    setProfileImage(img);
+
+    if (!username) return;
+
+    axios.get(`/api/users/${username}`)
+      .then((res) => {
+        setUser(res.data);
+      })
+      .catch((err) => {
+        console.error("유저 정보 가져오기 실패:", err);
+      });
+  }, [username]);
+
+    useEffect(() => {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("theme", theme);
+    }, [theme]);
+
+    return (
+      <div className={styles.body}>
+        <nav>
+          <div className={styles.nav}>
+            <div className={styles.logo1}><h2>Logo</h2><span></span></div>
+            <ul className={styles.navmenu}>
+              <li className={styles.homebtn}><button className={styles.button} onClick={() => navigate("/main")}>Home</button></li>
+              <li className={styles.infobtn}><button className={styles.button} onClick={() => navigate("/ChatApp")}>Chat</button></li>
+              <li className={styles.filebtn}><button className={styles.button} onClick={() => navigate("/file")}>File</button></li>
+              <li className={styles.emailbtn}><button className={styles.button} onClick={() => navigate("/sendEmail")}>Email</button></li>
+            </ul>
+          </div>
+        </nav>
+    
+        <Search
+          setTheme={setTheme}
+          fetchSearchData={fetchSearchData}
+          searchResults={searchResults}
+          isLoading={isLoading}
+          setSearchText={setSearchText}
+          searchText={searchText}
+          showResults={showResults}
+          setShowResults={setShowResults}
+          handleLogout={handleLogout}
+          setShowSettings={setShowSettings}
         />
+    
+        <form ref={form} onSubmit={handleSubmit} className={styles.mailform}>
+          <div className={styles.inputGroup}>
+            <input
+              type="email"
+              name="user_email"
+              placeholder="받는 사람 이메일"
+              required
+              className={styles.input}
+            />
+          </div>
+    
+          <div className={styles.inputGroup}>
+            <input
+              type="text"
+              name="subject"
+              placeholder="제목"
+              required
+              className={styles.input}
+            />
+          </div>
+    
+          <div className={styles.textAreaBox}>
+            <textarea
+              name="message"
+              placeholder="메시지"
+              required
+              className={styles.textArea}
+            />
+          </div>
+    
+          <div className={styles.inputGroup}>
+            <input
+              type="file"
+              onChange={handleFileChange}
+              required
+              className={styles.fileButton}
+            />
+          </div>
+    
+          <input type="hidden" name="download_link" />
+    
+          <div className={styles.button}>
+            <button
+              type="submit"
+              disabled={uploading}
+              className={styles.submitButton}
+            >
+              {uploading ? "업로드 중..." : "보내기"}
+            </button>
+          </div>
+    
+          {showSettings && (
+            <AccountSetting onClose={() => setShowSettings(false)} />
+          )}
+        </form>
       </div>
-  
-      <div className={styles.inputGroup}>
-        <input
-          type="text"
-          name="subject"
-          placeholder="제목"
-          required
-          className={styles.input}
-        />
-      </div>
-  
-      <div className={styles.textAreaBox}>
-        <textarea
-          name="message"
-          placeholder="메시지"
-          required
-        />
-      </div>
-  
-      <div className={styles.inputGroup}>
-        <input
-          type="file"
-          onChange={handleFileChange}
-          required
-          className={styles.fileButton}
-        />
-      </div>
-  
-      <input type="hidden" name="download_link" />
-  
-      <div className={styles.button}>
-        <button
-          type="submit"
-          disabled={uploading}
-          className={styles.submitButton}
-        >
-          {uploading ? "업로드 중..." : "보내기"}
-        </button>
-      </div>
-    </form>
-  );
-};
-export default FirebaseEmailForm;
+    );
+  };
+    
+    export default FirebaseEmailForm;
