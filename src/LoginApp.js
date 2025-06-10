@@ -53,27 +53,42 @@ function LoginPage() {
 
   const loginButton = async () => {
     try {
+      // 로그인 요청
       const response = await api.post("/api/auth/login", {
         username: ID,
         password: PW
       }, {
         withCredentials: true
       });
-
-      const { accessToken } = response.data;
+  
+      const { token: accessToken } = response.data;
       sessionStorage.setItem("userToken", accessToken);
       sessionStorage.setItem("userId", ID);
-      sessionStorage.setItem("username", response.data.username);
-      sessionStorage.setItem("name", response.data.name);
-
-      // ✅ 아이디 저장 처리
+  
+      // ✅ 유저 정보 요청 (토큰으로)
+      const userRes = await api.get("/api/auth/me", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        withCredentials: true
+      });
+  
+      const { username, name, profile_image } = userRes.data.user;
+  
+      sessionStorage.setItem("username", username);
+      sessionStorage.setItem("name", name);
+      sessionStorage.setItem("profileImage", profile_image);
+  
+      // ✅ 아이디 저장 여부
       if (saveID) {
         localStorage.setItem("saveID", ID);
       } else {
         localStorage.removeItem("saveID");
       }
-
+  
+      // ✅ 로그인 완료 후 메인 페이지 이동
       navigate("/main");
+  
     } catch (error) {
       if (error.response?.data?.message) {
         alert(error.response.data.message);
@@ -82,6 +97,7 @@ function LoginPage() {
       }
     }
   };
+  
 
   return (
     <div className={styles.App}>
@@ -127,7 +143,7 @@ function LoginPage() {
             <button
               className={styles.linkpage}
               onClick={loginButton}
-              disabled={!PWvalid || notAllow}
+              // disabled={!PWvalid || notAllow}
             >
               <h2>Login</h2>
             </button>

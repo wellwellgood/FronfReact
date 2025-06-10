@@ -19,6 +19,47 @@ function generateCode() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) return res.status(401).json({ message: "인증 토큰 없음" });
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      console.error("❌ 토큰 검증 실패:", err.message);
+      return res.status(403).json({ message: "토큰이 유효하지 않음" });
+    }
+  
+    console.log("✅ 토큰 유저:", user); // 👈 이거 추가
+    req.user = user;
+    next();
+  });
+};
+
+// ✅ GET /api/users/me
+router.get("/me", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id; // 토큰에서 복호화된 userId
+
+    const result = await pool.query(
+      "SELECT username, name, profile_image FROM users WHERE id = $1",
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "사용자 없음" });
+    }
+    
+    const user = result.rows[0];
+    res.json({ user });
+  } catch (err) {
+    console.error("유저 정보 조회 오류:", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+
+
 // ✅ 인증번호 전송
 router.post("/send-code", async (req, res) => {
   const { phone } = req.body;

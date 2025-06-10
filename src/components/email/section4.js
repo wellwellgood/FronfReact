@@ -1,215 +1,127 @@
-import React, { useRef, useState, useEffect } from "react";
+// ✅ Firebase + EmailJS로 네이버 메일 방식 구현 예시 (React 기준)
+// 파일 업로드 -> Firebase Storage -> 다운로드 URL -> EmailJS로 전송
+
+import React, { useRef, useState } from "react";
 import emailjs from "@emailjs/browser";
-import styles from "./AA/email.js/SendEmail.module.css";
-import Search from "../../search";
-import { useNavigate } from "react-router-dom";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { initializeApp } from "firebase/app";
+import styles from "./AA/email.js/SendEmail.module.css"
 
-const Section4 = () => {
-  const navigate = useNavigate();
+// 🔧 Firebase 설정
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_BUCKET.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// 🔧 초기화
+const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
+
+const FirebaseEmailForm = () => {
   const form = useRef();
-  const fileInputRef = useRef(null);
+  const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
-  const [agree, setAgree] = useState(false);
-  const [searchResults, setSearchResults] = useState([]);
-  const [searchText, setSearchText] = useState("");
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("theme") || "light";
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState([]);
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!agree) {
-      alert("개인정보 수집 및 이용에 동의해주세요.");
+
+    if (!file) {
+      alert("파일을 선택해주세요.");
       return;
     }
 
-    emailjs
-      .sendForm(
-        "YOUR_SERVICE_ID",
-        "YOUR_TEMPLATE_ID",
+    setUploading(true);
+
+    try {
+      // 🔼 1. Firebase Storage에 업로드
+      const storageRef = ref(storage, `uploads/${file.name}`);
+      await uploadBytes(storageRef, file);
+
+      // 🔗 2. 다운로드 URL 가져오기
+      const downloadURL = await getDownloadURL(storageRef);
+
+      // 📨 3. EmailJS로 다운로드 링크 포함 전송
+      const formData = new FormData(form.current);
+      formData.append("download_link", downloadURL);
+
+      await emailjs.sendForm(
+        "service_a9udeim",
+        "template_3nu35ld",
         form.current,
-        "YOUR_PUBLIC_KEY"
-      )
-      .then(
-        () => {
-          alert("이메일이 성공적으로 전송되었습니다.");
-          form.current.reset();
-          setAgree(false);
-          setSelectedFiles([]); // 파일 초기화
-        },
-        (error) => {
-          alert("이메일 전송에 실패했습니다. 다시 시도해주세요.");
-          console.error("EmailJS Error:", error);
-        }
+        "s9Hb7DTTLBcp34TPu"
       );
-  };
 
-  const fetchSearchData = () => {
-    console.log("🔍 검색 데이터 가져오기");
-  };
-
-  const handleLogout = () => {
-    console.log("🚪 로그아웃 처리");
-    sessionStorage.removeItem("username");
-    sessionStorage.removeItem("name");
-
-    navigate("/login");
-  };
-
-  const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length > 0) {
-      setSelectedFiles(files);
-      console.log("파일 선택됨:", files.map((f) => f.name).join(", "));
+      alert("이메일 전송 성공!");
+      form.current.reset();
+      setFile(null);
+    } catch (error) {
+      console.error("업로드 또는 이메일 전송 오류:", error);
+      alert("실패: " + error.message);
+    } finally {
+      setUploading(false);
     }
   };
 
-  const handleRemoveFile = (index) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
   return (
-    <div className={styles.container}>
-      <nav>
-        <div className={styles.nav}>
-          <div className={styles.logo1}>
-            <h2>Logo</h2>
-          </div>
-          <ul className={styles.navmenu}>
-            <li><button onClick={() => navigate("/main")}>Home</button></li>
-            <li><button onClick={() => navigate("/ChatApp")}>Chat</button></li>
-            <li><button onClick={() => navigate("/file")}>File</button></li>
-            <li><button onClick={() => navigate("/sendEmail")}>Email</button></li>
-          </ul>
-        </div>
-      </nav>
-
-      <Search
-        setTheme={setTheme}
-        fetchSearchData={fetchSearchData}
-        searchResults={searchResults}
-        isLoading={isLoading}
-        setSearchText={setSearchText}
-        searchText={searchText}
-        showResults={showResults}
-        setShowResults={setShowResults}
-        handleLogout={handleLogout}
-      />
-
-      <form ref={form} onSubmit={handleSubmit} className={styles.mailform}>
-        <div className={styles.inputGroup}>
-          <label htmlFor="user_send_name">보낸 사람 이메일</label>
-          <input
-            id="user_send_name"
-            name="user_send_name"
-            type="email"
-            placeholder="이메일 주소"
-            required
-          />
-        </div>
-
-        <div className={styles.inputGroup}>
-          <label htmlFor="user_accept_email">받는 사람 이메일</label>
-          <input
-              id="user_accept_email"
-              name="user_accept_email"
-              type="text"
-              placeholder="이메일 주소"
-              required
-            />
-        </div>
-        
-        <div className={styles.inputGroup}>
-          <label htmlFor="subject">제목</label>
-          <input
-            id="subject"
-            name="subject"
-            type="text"
-            placeholder="제목"
-            required
-          >
-          </input>
-        </div>
-
-        <div className={styles.inputGroup}>
-          <label htmlFor="File_upload">파일첨부</label>
-          <button
-            type="button"
-            className={styles.fileButton}
-            onClick={() => fileInputRef.current.click()}
-            title="파일 첨부"
-          >
-            {selectedFiles.length === 0 && (
-              <span className={styles.fileText}>
-                <span className={styles.PC}>내 PC</span>의 <span className={styles.PC}>&nbsp;파일</span>&nbsp;을 선택해주세요.
-              </span>
-            )}
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-              style={{ display: "none" }}
-              multiple
-            />
-            {selectedFiles.length > 0 && (
-              <div className={styles.selectedFileList}>
-                {selectedFiles.map((file, index) => (
-                  <div key={index} className={styles.selectedFile}>
-                    {file.name}
-                    <button
-                      type="button"
-                      className={styles.closeButton}
-                      onClick={() => handleRemoveFile(index)}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </button>
-        </div>
-
-        <div className={styles.privacyBox}>
-          <p className={styles.privacyText}>
-            본인은 개인정보 보호법 제15조에 따라 본인의 이메일 정보를 제공하는 것에 동의합니다.
-          </p>
-          <label className={styles.checkboxLine}>
-            <input
-              type="checkbox"
-              checked={agree}
-              onChange={(e) => setAgree(e.target.checked)}
-              required
-            />
-            <span>개인정보 수집 및 이용에 동의합니다. (필수)</span>
-          </label>
-        </div>
-
-        <div className={styles.textAreaBox}>
-          <input
-            name="message"
-            placeholder="내용을 입력하세요"
-            className={styles.textArea}
-            required
-          ></input>
-          <button 
+    <form ref={form} onSubmit={handleSubmit} className={styles.mailform}>
+      
+      <div className={styles.inputGroup}>
+        <input
+          type="email"
+          name="user_email"
+          placeholder="받는 사람 이메일"
+          required
+          className={styles.input}
+        />
+      </div>
+  
+      <div className={styles.inputGroup}>
+        <input
+          type="text"
+          name="subject"
+          placeholder="제목"
+          required
+          className={styles.input}
+        />
+      </div>
+  
+      <div className={styles.textAreaBox}>
+        <textarea
+          name="message"
+          placeholder="메시지"
+          required
+        />
+      </div>
+  
+      <div className={styles.inputGroup}>
+        <input
+          type="file"
+          onChange={handleFileChange}
+          required
+          className={styles.fileButton}
+        />
+      </div>
+  
+      <input type="hidden" name="download_link" />
+  
+      <div className={styles.button}>
+        <button
           type="submit"
+          disabled={uploading}
           className={styles.submitButton}
-          >
-          전송
+        >
+          {uploading ? "업로드 중..." : "보내기"}
         </button>
-        </div>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 };
-
-export default Section4;
+export default FirebaseEmailForm;

@@ -117,7 +117,6 @@
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   z-index: 100;
   color: var(--text-color);
-
 }
 .infoform div{
   padding: 10px;
@@ -129,6 +128,13 @@
 }
 .infoform div:hover{
   background-color: var(--hover-bg);
+}
+.userInfo h2{
+  font-size: 16px;
+  padding: 10px;
+}
+.themeMenu div:hover{
+  color: #fff;
 }
 
 .Account, .theme, .light, .dark {

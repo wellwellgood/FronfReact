@@ -4,22 +4,32 @@ import CustomCalendar from "./calender/calender";
 import styles from "./main.module.css";
 import Search from "./search";
 import axios from "axios";
+import AccountSetting from './AccountSetting';
 
 function Main() {
-  const isLogtin = sessionStorage.getItem("isAuthenticated");
-  if (isLogtin) return <Navigate to="/" replace />;
+  const navigate = useNavigate();
 
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
-  const [showCalendar, setShowCalendar] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState({ profile_image: "" });
   const [profileImage, setProfileImage] = useState("");
-  const navigate = useNavigate();
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("theme") || "light";
-  });
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
+  const [showSettings, setShowSettings] = useState(false);
+
+  const username = sessionStorage.getItem("username");
+  const isLogtin = sessionStorage.getItem("isAuthenticated");
+
+  // ✅ 로그인 안 되어 있으면 로그인 페이지로 이동
+  if (!username) {
+    console.warn("⚠️ sessionStorage에 username 없음, 로그인 페이지로 리다이렉트");
+    return <Navigate to="/login" replace />;
+  }
+
+  if (isLogtin) {
+    return <Navigate to="/" replace />;
+  }
 
   const fetchSearchData = async (query) => {
     setIsLoading(true);
@@ -43,20 +53,24 @@ function Main() {
 
   useEffect(() => {
     const img = sessionStorage.getItem("profileImage");
-    const username = sessionStorage.getItem("username");
-    if (!username) return;
 
     setProfileImage(img);
-    axios.get(`/api/users/${username}`)
-      .then((res) => setUser(res.data))
-      .catch((err) => console.error("유저 정보 가져오기 실패:", err));
-  }, []);
 
-    useEffect(() => {
-      document.documentElement.setAttribute("data-theme", theme);
-      localStorage.setItem("theme", theme);
-    }, [theme]);
-  
+    if (!username) return;
+
+    axios.get(`/api/users/${username}`)
+      .then((res) => {
+        setUser(res.data);
+      })
+      .catch((err) => {
+        console.error("유저 정보 가져오기 실패:", err);
+      });
+  }, [username]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   return (
     <div className={styles.body}>
@@ -69,7 +83,6 @@ function Main() {
             <li className={styles.filebtn}><button className={styles.button} onClick={() => navigate("/file")}>File</button></li>
             <li className={styles.emailbtn}><button onClick={() => navigate("/sendEmail")}>Email</button></li>
           </ul>
-          {/* <div className={styles.setting}><Link to="/">Setting</Link></div> */}
         </div>
       </nav>
 
@@ -83,16 +96,43 @@ function Main() {
         showResults={showResults}
         setShowResults={setShowResults}
         handleLogout={handleLogout}
+        setShowSettings={setShowSettings}
       />
 
       <div className={styles.mainboard}>
-        <div className={styles.main}><div className={styles.title}><span>MAIN</span><div className={styles.morebtn}><Link to="/"></Link></div></div><div><h1>aaa</h1></div></div>
-        <div className={styles.info}><div className={styles.title}><span>INFO</span><div className={styles.morebtn}><Link to="/info"></Link></div></div></div>
-        <div className={styles.empty}><div className={styles.title}><span>Calender</span><div className={styles.morebtn}><Link to="/sendEmail"></Link></div></div><CustomCalendar /></div>
-        <div className={styles.file}><div className={styles.title}><span>FILE</span><div className={styles.morebtn}><Link to="/file"></Link></div></div></div>
+        <div className={styles.main}>
+          <div className={styles.title}>
+            <span>MAIN</span>
+            <div className={styles.morebtn}><Link to="/"></Link></div>
+          </div>
+          <div><h1>aaa</h1></div>
+        </div>
+        <div className={styles.info}>
+          <div className={styles.title}>
+            <span>INFO</span>
+            <div className={styles.morebtn}><Link to="/info"></Link></div>
+          </div>
+        </div>
+        <div className={styles.empty}>
+          <div className={styles.title}>
+            <span>Calender</span>
+            <div className={styles.morebtn}><Link to="/sendEmail"></Link></div>
+          </div>
+          <CustomCalendar />
+        </div>
+        <div className={styles.file}>
+          <div className={styles.title}>
+            <span>FILE</span>
+            <div className={styles.morebtn}><Link to="/file"></Link></div>
+          </div>
+        </div>
       </div>
+      {showSettings && (
+        <AccountSetting onClose={() => setShowSettings(false)} />
+      )}
     </div>
   );
+  
 }
 
 export default Main;

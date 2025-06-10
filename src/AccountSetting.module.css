@@ -1,0 +1,112 @@
+.container {
+    padding: 20px;
+    max-width: 700px;
+    margin: 0 auto;
+    font-family: sans-serif;
+  }
+  
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+  
+  .logo1 h2 {
+    font-size: 24px;
+    margin: 0;
+  }
+  
+  .navmenu {
+    list-style: none;
+    display: flex;
+    gap: 15px;
+  }
+  
+  .navmenu li button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .mailform {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .inputGroup {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .inputGroup label {
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  
+  .inputGroup input[type="email"],
+  .inputGroup input[type="text"],
+  .inputGroup input[type="file"],
+  .textAreaBox textarea {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .fileButton {
+    padding: 10px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .selectedFile {
+    background-color: #f0f0f0;
+    padding: 10px;
+    border-left: 4px solid #007BFF;
+    border-radius: 4px;
+  }
+  
+  .fileText {
+    margin: 0;
+    font-size: 14px;
+  }
+  
+  .PC {
+    font-weight: bold;
+  }
+  
+  .textAreaBox textarea {
+    width: 100%;
+    height: 150px;
+    resize: vertical;
+  }
+  
+  .privacyBox {
+    font-size: 14px;
+  }
+  
+  .checkboxLine {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .button {
+    text-align: center;
+  }
+  
+  .submitButton {
+    background-color: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  

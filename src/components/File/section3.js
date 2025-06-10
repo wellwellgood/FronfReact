@@ -134,7 +134,12 @@ export default function FileUploadPage() {
       <div className={styles.fileUpload}>
         <h2>파일 업로드 및 다운로드</h2>
         <div className={styles.upload}>
-          <input type="file" ref={inputRef} onChange={handleFileChange} />
+          <input 
+            type="file"
+            ref={inputRef}
+            onChange={handleFileChange}
+            className={styles.fileInput}
+          />
           <button onClick={handleUpload}>업로드</button>
         </div>
 

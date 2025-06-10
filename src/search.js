@@ -6,15 +6,12 @@ import axios from 'axios';
 import styles from './search.module.css';
 
 const Search = ({
-  fetchSearchData,
-  searchResults = [],
-  isLoading = false,
-  setSearchText,
-  searchText,
-  showResults,
-  setShowResults,
-  handleLogout,
-  setTheme
+  showSettings = false,
+  setShowSettings = () => {},
+  showResults = false,
+  setShowResults = () => {},
+  searchText = '',
+  setSearchText = () => {}
 }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState({ profile_image: "" });
@@ -50,15 +47,15 @@ const Search = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSearchChange = (e) => {
+  const handleInputChange = (e) => {
     setSearchText(e.target.value);
-    setShowResults(true);
+    setShowResults(e.target.value.trim() !== '');
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchText.trim() === '') return;
-    fetchSearchData(searchText);
+    // 🔍 여기에 fetchSearchData(searchText) 같은 실제 검색 요청 로직 추가
   };
 
   const handleResultClick = (path) => {
@@ -68,17 +65,24 @@ const Search = ({
   };
 
   const toggleTheme = (theme) => {
-    setTheme(theme);
-    setShowThemeMenu(false); // 선택 후 닫기
+    localStorage.setItem('theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+    setShowThemeMenu(false);
   };
 
   const handleProfileClick = () => {
-    setShowInfoForm(prev => !prev);
+    setShowInfoForm((prev) => !prev);
     setShowThemeMenu(false);
   };
 
   const toggleThemeMenu = () => {
-    setShowThemeMenu(prev => !prev);
+    setShowThemeMenu((prev) => !prev);
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = '/';
   };
 
   return (
@@ -89,28 +93,18 @@ const Search = ({
             <input
               type="text"
               value={searchText}
-              className={styles.searchbox}
-              onChange={handleSearchChange}
-              placeholder="  Search..."
+              onChange={handleInputChange}
+              placeholder="검색어 입력..."
+              className={styles.searchInput}
             />
             <button type="submit" className={styles.searchButton}><FaSearch /></button>
           </form>
           {showResults && (
-            <div className={styles.searchResults}>
-              {isLoading ? (
-                <div className={styles.loadingIndicator}>검색 중...</div>
-              ) : searchResults.length > 0 ? (
-                <ul className={styles.result}>
-                  {searchResults.map((item) => (
-                    <li key={item.id} onClick={() => handleResultClick(item.path)}>
-                      <span className={styles.resultTitle}>{item.title}</span>
-                      <span className={styles.resultCategory}>{item.category}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className={styles.noResults}>검색 결과가 없습니다</p>
-              )}
+            <div className={styles.resultsPanel}>
+              <p>검색 결과 표시 영역입니다.</p>
+              <button onClick={() => setShowResults(false)} className={styles.closeResults}>
+                닫기
+              </button>
             </div>
           )}
         </div>
@@ -118,17 +112,27 @@ const Search = ({
         <div className={styles.userInfoBox} ref={infoRef}>
           <img
             className={styles.profileImage}
-            src={user.profile_image ? `https://react-server-wmqa.onrender.com${profileImage}` : ""}
-            alt="프로필"
+            src={user.profile_image ? `https://react-server-wmqa.onrender.com${profileImage}` : "/img/icons8-user-48.png"}
             onClick={handleProfileClick}
+            alt="프로필"
           />
 
           {showInfoForm && (
             <div className={styles.infoform}>
+              <span className={styles.userInfo}>
+                <h2>{`${user.name || user.username || "사용자"}님, 환영합니다!`}</h2>
+              </span>
+
               <div className={styles.menuItem}>
-                <Link to="/app/settings" className={styles.link}>
-                  Account settings
-                </Link>
+                <button
+                  onClick={() => {
+                    console.log("⚙️ 설정 버튼 클릭됨");
+                    setShowSettings(true);
+                  }}
+                  className={styles.settingsButton}
+                >
+                  ⚙️ 설정 열기
+                </button>
               </div>
 
               <div className={styles.menuItem}>
