@@ -10,12 +10,13 @@ import AccountSetting from '../../AccountSetting';
 
 // 🔧 Firebase 설정
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_BUCKET.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyC55y7j682bM947ncn6HQYsYhvVrctT9_Y",
+  authDomain: "emailjs-f5667.firebaseapp.com",
+  projectId: "emailjs-f5667",
+  storageBucket: "emailjs-f5667.firebasestorage.app",
+  messagingSenderId: "491183703779",
+  appId: "1:491183703779:web:6be4a904a7094be11fa7d6",
+  measurementId: "G-XEEDJBZ464"
 };
 
 // 🔧 초기화
