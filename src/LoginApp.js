@@ -98,7 +98,6 @@ function LoginPage() {
     }
   };
   
-
   return (
     <div className={styles.App}>
       <header className={styles["App-header"]}>

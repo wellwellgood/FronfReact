@@ -1,12 +1,15 @@
 // ✅ Firebase + EmailJS로 네이버 메일 방식 구현 예시 (React 기준)
 // 파일 업로드 -> Firebase Storage -> 다운로드 URL -> EmailJS로 전송
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Search from "../../search";
 import emailjs from "@emailjs/browser";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { initializeApp } from "firebase/app";
 import styles from "./AA/email.js/SendEmail.module.css"
 import AccountSetting from '../../AccountSetting';
+import axios from "axios";
 
 // 🔧 Firebase 설정
 const firebaseConfig = {
@@ -36,9 +39,25 @@ const FirebaseEmailForm = () => {
   const [profileImage, setProfileImage] = useState("");
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
   const [showSettings, setShowSettings] = useState(false);
+  const navigate = useNavigate();
 
   const username = sessionStorage.getItem("username");
   const isLogtin = sessionStorage.getItem("isAuthenticated");
+
+
+  const fetchSearchData = async (query) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`/api/search?query=${encodeURIComponent(query)}`);
+      setSearchResults(response.data);
+      setShowResults(true);
+    } catch (error) {
+      console.error("검색 데이터 가져오기 실패:", error);
+      setSearchResults([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -139,10 +158,22 @@ const FirebaseEmailForm = () => {
         />
     
         <form ref={form} onSubmit={handleSubmit} className={styles.mailform}>
-          <div className={styles.inputGroup}>
+        <div className={styles.inputGroup}>
+            보내는사람 이메일
             <input
               type="email"
               name="user_email"
+              placeholder="보내는 사람 이메일"
+              required
+              className={styles.input}
+            />
+          </div>
+
+          <div className={styles.inputGroup}>
+            받는사람 이메일
+            <input
+              type="email"
+              name="to"
               placeholder="받는 사람 이메일"
               required
               className={styles.input}
@@ -150,6 +181,7 @@ const FirebaseEmailForm = () => {
           </div>
     
           <div className={styles.inputGroup}>
+            제목
             <input
               type="text"
               name="subject"
@@ -160,6 +192,7 @@ const FirebaseEmailForm = () => {
           </div>
     
           <div className={styles.textAreaBox}>
+            메시지
             <textarea
               name="message"
               placeholder="메시지"

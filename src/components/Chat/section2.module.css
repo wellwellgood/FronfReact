@@ -322,6 +322,15 @@ nav {
   font-size: 12px;
 }
 
+.filePreview{
+  margin-top: 10px;
+  height: 100%;
+}
+.filePreview a{
+  padding: 5px;
+  margin-top: 10px;
+}
+
 .messageMeta {
   font-size: 0.75rem;
   color: gray;
@@ -398,6 +407,7 @@ nav {
   justify-content: center;
   border: 50px;
   border-top: 1px solid var(--accent-color);
+  position: relative;
 }
 .inputBox:focus{
   inset: 2px solid var(--accent-color);
@@ -422,6 +432,15 @@ nav {
   font-size: 16px;
   cursor: pointer;
 }
+.selectedFile{
+  position: absolute;
+  right: 45px;
+}
+.selectedFile button{
+  background: none;
+  padding: 10px;
+}
+
 .chatscreen{
   display: flex;
   flex: 1;

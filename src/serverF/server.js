@@ -24,6 +24,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // DB 연결이 실패할 경우 대체 응답을 제공하는 미들웨어
 let dbConnected = false;
@@ -45,7 +46,6 @@ app.use(async (req, res, next) => {
 // API 라우트
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
-app.use("/api", messageRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/chat", chatRoutes);
 

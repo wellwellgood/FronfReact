@@ -108,9 +108,9 @@ const Section2 = () => {
         const isDuplicate = prev.some((m) =>
           (m.id && safeMsg.id && m.id === safeMsg.id) ||
           (m.sender_username === safeMsg.sender_username &&
-           m.receiver_username === safeMsg.receiver_username &&
-           m.content === safeMsg.content &&
-           Math.abs(new Date(m.time) - new Date(safeMsg.time)) < 2000)
+          m.receiver_username === safeMsg.receiver_username &&
+          m.content === safeMsg.content &&
+          Math.abs(new Date(m.time) - new Date(safeMsg.time)) < 2000)
         );
         
         if (isDuplicate) {
@@ -298,7 +298,6 @@ const Section2 = () => {
       id: tempId,
       sender_username: username,
       receiver_username: selectedUser.username,
-      sender_name: name,
       receiver_name: selectedUser.name,
       content: input.trim(),
       read: false,
@@ -326,22 +325,27 @@ const Section2 = () => {
         const formData = new FormData();
         formData.append("sender_username", username);
         formData.append("receiver_username", selectedUser.username);
-        formData.append("sender_name", name);
         formData.append("receiver_name", selectedUser.name);
         formData.append("content", input.trim());
         formData.append("read", false);
         formData.append("file", selectedFile);
 
-        response = await axios.post(`${API}/api/messages`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
+        console.log("전송되는 formData 값들", {
+          sender_username: username,
+          receiver_username: selectedUser.username,
+          receiver_name: selectedUser.name,
+          content: input.trim()
         });
+        console.log("formData.has(file):", formData.has("file")); 
+        console.log("file:", selectedFile);
+
+        await axios.post(`${API}/api/messages`, formData);
 
         setSelectedFile(null);
       } else {
         response = await axios.post(`${API}/api/messages`, {
           sender_username: username,
           receiver_username: selectedUser.username,
-          sender_name: name,
           receiver_name: selectedUser.name,
           content: input.trim(),
           read: false,
@@ -349,16 +353,14 @@ const Section2 = () => {
       }
 
       const savedMessage = response.data;
+      console.log("✅ 저장된 메시지 응답:", savedMessage);
+      console.log("📎 메시지 내용 확인:", savedMessage);
 
       // ✅ 임시 메시지를 실제 메시지로 교체
       setMessages((prev) =>
         prev.map((msg) => (msg.id === tempId ? savedMessage : msg))
       );
 
-      // ✅ 소켓 브로드캐스트
-      if (socket && socket.connected) {
-        socket.emit("message", savedMessage);
-      }
     } catch (err) {
       console.error("❌ 메시지 전송 실패:", err.response?.data || err.message);
       alert("메시지 전송 실패");
@@ -564,13 +566,19 @@ const Section2 = () => {
                     >
                       {!isMine && (
                         <div className={styles.profileIcon}>
-                          {msg.sender_name?.[0] || "?"}
                         </div>
                       )}
                       <div className={styles.bubbleWrapper}>
                         <div className={styles.messageBubble}>
                           <div className={styles.messageText}>
                             {msg.content || '내용 없음'}
+                            {(msg.fileUrl || msg.file) && (
+                            <div className={styles.filePreview}>
+                              <a href={msg.fileUrl} download target="_blank" rel="noopener noreferrer">
+                              📎{(msg.fileName || msg.file?.name || msg.fileUrl?.split("/").pop() || "파일").toString()}
+                            </a>
+                            </div>
+                          )}
                           </div>
                           <div className={styles.messageMeta}>
                             <span className={styles.time}>

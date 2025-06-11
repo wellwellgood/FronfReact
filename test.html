@@ -1,0 +1,47 @@
+import React from "react";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
+import * as THREE from "three";
+
+function GlassPanel({ position }) {
+  return (
+    <mesh position={position}>
+      <planeGeometry args={[2, 3]} />
+      <shaderMaterial
+        transparent
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        vertexShader={`
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `}
+        fragmentShader={`
+          varying vec2 vUv;
+          void main() {
+            float alpha = 0.1;
+            vec3 color = vec3(
+              0.5 + 0.5 * sin(vUv.x * 20.0),
+              0.5 + 0.5 * sin(vUv.y * 20.0),
+              1.0 - vUv.y
+            );
+            gl_FragColor = vec4(color, alpha);
+          }
+        `}
+      />
+    </mesh>
+  );
+}
+
+export default function GlassOverlapEffect() {
+  return (
+    <Canvas camera={{ position: [0, 0, 5] }}>
+      <ambientLight />
+      <GlassPanel position={[-0.5, 0, 0]} />
+      <GlassPanel position={[0.5, 0, 0]} />
+      <OrbitControls enableZoom={false} />
+    </Canvas>
+  );
+}

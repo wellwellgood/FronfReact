@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useRef, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import styles from "./section3.module.css";
 import Search from "../../search";
@@ -13,13 +13,14 @@ export default function FileUploadPage() {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const inputRef = useRef(null);
   const navigate = useNavigate();
-   const [theme, setTheme] = useState(() => {
+  const [theme, setTheme] = useState(() => {
       return localStorage.getItem("theme") || "light";
     });
     const [searchResults, setSearchResults] = useState([]);
     const [searchText, setSearchText] = useState("");
     const [showResults, setShowResults] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    
     
 
   const gotoHome = () => navigate("/main");
