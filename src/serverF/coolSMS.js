@@ -11,7 +11,7 @@ const messageService = new Coolsms(apiKey, apiSecret);
 
 
 function generateCode() {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(Math.floor(100000 + Math.random() * 900000)); // 6자리 인증번호
 }
 
 router.post('/send-code', async (req, res) => {
@@ -37,8 +37,8 @@ router.post('/send-code', async (req, res) => {
     console.log("✅ 쿨SMS 응답:", result);
     res.json({ success: true, code }); // 실서비스에서는 code 제외할 것
   } catch (error) {
-    console.error("❌ 문자 전송 실패:", error.response?.data || error.message);
-    res.status(500).json({ success: false, message: "문자 전송 실패" });
+    console.error("문자 전송 실패:", error);
+    res.status(500).json({ message: "문자 전송에 실패했습니다." });
   }
 });
 
