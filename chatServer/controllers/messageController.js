@@ -4,9 +4,11 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
+
 const uploadDir = path.join(__dirname, "../uploads");
   if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
+  console.log("💬 업로드 경로:", uploadDir);
 }
 
 // ✅ 파일 저장 설정
