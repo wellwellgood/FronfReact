@@ -1,114 +1,172 @@
 const express = require("express");
+const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const pool = require("../DB"); // default export된 pool
-const router = express.Router();
+const pool = require("../DB");
+const Coolsms = require("coolsms-node-sdk").default;
+require("dotenv").config();
 
-// ✅ 토큰 생성 함수
-const generateAccessToken = (user) => {
-  return jwt.sign(
-    { id: user.id, username: user.username, name: user.name },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
+const sms = new Coolsms(process.env.COOLSMS_API_KEY, process.env.COOLSMS_API_SECRET);
+const sender = process.env.COOLSMS_SENDER_NUMBER;
+
+console.log("SMS KEY:", process.env.COOLSMS_API_KEY);      // null이면 문제
+console.log("SMS SECRET:", process.env.COOLSMS_API_SECRET);
+console.log("SENDER:", process.env.COOLSMS_SENDER_NUMBER);
+
+const verificationCodes = new Map(); // 메모리 저장소
+
+function generateCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) return res.status(401).json({ message: "인증 토큰 없음" });
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      console.error("❌ 토큰 검증 실패:", err.message);
+      return res.status(403).json({ message: "토큰이 유효하지 않음" });
+    }
+  
+    console.log("✅ 토큰 유저:", user); // 👈 이거 추가
+    req.user = user;
+    next();
+  });
 };
 
-const generateRefreshToken = (user) => {
-  return jwt.sign(
-    { id: user.id },
-    process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "7d" }
-  );
-};
+// ✅ GET /api/users/me
+router.get("/me", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id; // 토큰에서 복호화된 userId
+
+    const result = await pool.query(
+      "SELECT username, name, profile_image FROM users WHERE id = $1",
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "사용자 없음" });
+    }
+    
+    const user = result.rows[0];
+    res.json({ user });
+  } catch (err) {
+    console.error("유저 정보 조회 오류:", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+
+
+// ✅ 인증번호 전송
+router.post("/send-code", async (req, res) => {
+  const { phone } = req.body;
+  if (!phone) return res.status(400).json({ message: "전화번호가 누락되었습니다." });
+
+  const code = generateCode();
+  verificationCodes.set(phone, code);
+
+  try {
+    await sms.sendOne({
+      to: phone.replace(/-/g, ""),
+      from: sender,
+      text: `[인증번호] ${code} (본인확인용)`,
+    });
+
+    console.log("✅ 인증번호 전송:", code);
+    res.status(200).json({ success: true, code }); // ⚠️ 운영 시 code 제거
+  } catch (err) {
+    console.error("❌ 문자 전송 오류:", err.message);
+    res.status(500).json({ success: false, message: "문자 전송 실패" });
+  }
+});
+
+// ✅ 인증번호 검증
+router.post("/verify-code", (req, res) => {
+  const { phone, code } = req.body;
+  const storedCode = verificationCodes.get(phone);
+
+  if (storedCode === code) {
+    verificationCodes.delete(phone);
+    return res.status(200).json({ success: true });
+  } else {
+    return res.status(400).json({ success: false, message: "인증번호가 일치하지 않습니다." });
+  }
+});
 
 // ✅ 회원가입
 router.post("/register", async (req, res) => {
-  const { username, password, name, phone1, phone2, phone3 } = req.body;
-  const phone = `${phone1}-${phone2}-${phone3}`;
+  const { username, password, name, phone } = req.body;
+  if (!username || !password || !name || !phone) {
+    return res.status(400).json({ message: "모든 항목을 입력해주세요." });
+  }
 
-  let conn;
   try {
-    conn = await pool.connect();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const conn = await pool.connect();
+    const existing = await conn.query("SELECT * FROM users WHERE username = $1", [username]);
 
-    const check = await conn.query(
-      "SELECT * FROM users WHERE username = $1",
-      [username]
-    );
-    if (check.rows.length > 0) {
-      return res.status(409).json({ message: "이미 존재하는 아이디입니다." });
+    if (existing.rows.length > 0) {
+      conn.release();
+      return res.status(409).json({ message: "이미 존재하는 사용자입니다." });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const result = await conn.query(
-      `INSERT INTO users (username, password, name, phone)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id`,
+    await conn.query(
+      "INSERT INTO users (username, password, name, phone) VALUES ($1, $2, $3, $4)",
       [username, hashedPassword, name, phone]
     );
 
-    res.status(201).json({ message: "회원가입 성공", userId: result.rows[0].id });
-
+    conn.release();
+    res.status(201).json({ message: "회원가입 성공" });
   } catch (err) {
-    console.error("❌ register 오류:", err.message);
+    console.error("❌ 회원가입 오류:", err.message);
     res.status(500).json({ message: "서버 오류" });
-  } finally {
-    if (conn) conn.release();
   }
 });
 
 // ✅ 로그인
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password)
-    return res.status(400).json({ message: "입력 누락" });
+  if (!username || !password) {
+    return res.status(400).json({ message: "아이디와 비밀번호를 입력해주세요." });
+  }
 
-  let conn;
   try {
-    conn = await pool.connect();
-    const result = await conn.query(
-      "SELECT * FROM users WHERE username = $1",
-      [username]
-    );
+    const conn = await pool.connect();
+    const result = await conn.query("SELECT * FROM users WHERE username = $1", [username]);
+    conn.release();
 
-    if (result.rows.length === 0)
-      return res.status(401).json({ message: "아이디가 존재하지 않습니다." });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+    }
 
     const user = result.rows[0];
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(401).json({ message: "비밀번호가 일치하지 않습니다." });
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ message: "비밀번호가 일치하지 않습니다." });
 
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "Strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    res.status(200).json({ message: "로그인 성공", accessToken, username: user.username, name: user.name });
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    res.status(200).json({ message: "로그인 성공", token });
   } catch (err) {
-    console.error("❌ login 오류:", err.message);
+    console.error("❌ 로그인 오류:", err.message);
     res.status(500).json({ message: "서버 오류" });
-  } finally {
-    if (conn) conn.release();
   }
 });
 
 // ✅ 아이디 찾기
 router.post("/find-id", async (req, res) => {
-  const { name, phone1, phone2, phone3 } = req.body;
-  const phone = `${phone1}-${phone2}-${phone3}`;
+  const { phone } = req.body;
+  if (!phone) {
+    return res.status(400).json({ message: "전화번호가 누락되었습니다." });
+  }
 
   let conn;
   try {
     conn = await pool.connect();
     const result = await conn.query(
-      "SELECT username FROM users WHERE name = $1 AND phone = $2",
-      [name, phone]
+      "SELECT username FROM users WHERE phone = $1",
+      [phone]
     );
 
     if (result.rows.length === 0) {
@@ -126,73 +184,6 @@ router.post("/find-id", async (req, res) => {
   } finally {
     if (conn) conn.release();
   }
-});
-
-// ✅ 비밀번호 찾기
-router.post("/find-password", async (req, res) => {
-  const { username, name, phone1, phone2, phone3 } = req.body;
-  const phone = `${phone1}-${phone2}-${phone3}`;
-
-  let conn;
-  try {
-    conn = await pool.connect();
-    const result = await conn.query(
-      "SELECT * FROM users WHERE username = $1 AND name = $2 AND phone = $3",
-      [username, name, phone]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "일치하는 계정 정보가 없습니다." });
-    }
-
-    const token = generateAccessToken(result.rows[0]);
-    res.status(200).json({ message: "비밀번호 찾기 성공", token });
-
-  } catch (err) {
-    console.error("❌ find-password 오류:", err.message);
-    res.status(500).json({ message: "서버 오류" });
-  } finally {
-    if (conn) conn.release();
-  }
-});
-
-// ✅ 토큰 재발급
-router.post("/token", async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
-  if (!refreshToken)
-    return res.status(401).json({ message: "Refresh Token 없음" });
-
-  jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, async (err, decoded) => {
-    if (err)
-      return res.status(403).json({ message: "Refresh Token 유효하지 않음" });
-
-    let conn;
-    try {
-      conn = await pool.connect();
-      const result = await conn.query(
-        "SELECT * FROM users WHERE id = $1",
-        [decoded.id]
-      );
-
-      if (result.rows.length === 0)
-        return res.status(404).json({ message: "사용자 없음" });
-
-      const newAccessToken = generateAccessToken(result.rows[0]);
-      res.status(200).json({ accessToken: newAccessToken });
-    } catch (err) {
-      console.error("❌ 토큰 재발급 오류:", err.message);
-      res.status(500).json({ message: "토큰 재발급 실패" });
-    } finally {
-      if (conn) conn.release();
-    }
-  });
-});
-
-
-// ✅ 로그아웃
-router.post("/logout", (req, res) => {
-  res.clearCookie("refreshToken");
-  res.status(200).json({ message: "로그아웃 성공" });
 });
 
 module.exports = router;

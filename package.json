@@ -23,5 +23,6 @@
     "pg": "8.11.3",
     "socket": "^0.14.57",
     "socket.io": "^4.8.1"
-  }
+  },
+  "proxy": "https://react-server-wmqa.onrender.com"
 }

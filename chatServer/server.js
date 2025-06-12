@@ -1,5 +1,4 @@
 // ✅ 최종 정리된 server.js - Socket.IO만 사용
-
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
@@ -8,6 +7,7 @@ const pool = require("./express+mariadb.js");
 const http = require("http");
 const socket = require("./socket.js");
 const userRoutes = require("./routes/userRoutes.js");
+const authRoutes = require("../routes/auth.js");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -23,6 +23,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(require('cors')());
+app.use("/api/auth", authRoutes);
 
 // ✅ API 라우팅
 app.get('/api/messages', async (req, res) => {

@@ -6,7 +6,7 @@ const loginWithBackupUrls = async (credentials) => {
   const apiUrls = [
     "http://localhost:4000/users/login",
     "http://localhost:4000/login",
-    "http://localhost:4000/auth/login"
+    "http://localhost:4000/auth/login",
   ];
 
   localStorage.removeItem("SuccessfulLoginUrl");
@@ -53,11 +53,14 @@ const loginWithBackupUrls = async (credentials) => {
 export const loginUser = async (credentials) => {
   const successUrl = localStorage.getItem("successfulLoginUrl");
 
+  let response;
+
+  // 성공했던 URL 먼저 시도
   if (successUrl) {
     try {
       console.log(`🔍 이전 성공 URL로 로그인 시도: ${successUrl}`);
 
-      const response = await axios.post(successUrl, credentials, {
+      response = await axios.post(successUrl, credentials, {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
       });
@@ -68,12 +71,28 @@ export const loginUser = async (credentials) => {
         localStorage.setItem("userToken", response.data.token);
       }
 
-      return response.data;
     } catch (error) {
       console.error("❌ 이전 URL 로그인 실패:", error.response?.data || error.message);
-      return loginWithBackupUrls(credentials);
+      response = await loginWithBackupUrls(credentials);
     }
   } else {
-    return loginWithBackupUrls(credentials);
+    response = await loginWithBackupUrls(credentials);
   }
+
+  // 여기서 토큰 사용해서 유저 정보 요청
+  const token = response.token;
+  sessionStorage.setItem("userToken", token);
+
+  const userRes = await axios.get("http://localhost:4000/users/me", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    withCredentials: true
+  });
+
+  const { username, name } = userRes.data.user;
+  sessionStorage.setItem("username", username); // ✅ 이게 핵심입니다
+  sessionStorage.setItem("name", name);
+
+  return response;
 };
