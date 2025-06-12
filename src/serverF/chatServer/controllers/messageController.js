@@ -2,11 +2,17 @@
 const db = require("../db");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
+
+const uploadDir = path.join(__dirname, "../uploads");
+  if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // ✅ 파일 저장 설정
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "../uploads"));
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const cleaned = file.originalname.trim().replace(/\s+/g, "_");
@@ -15,9 +21,10 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
-exports.uploadMiddleware = upload.single("file");
 
+const upload = multer({ storage });
+
+exports.uploadMiddleware = upload.single("file");
 // ✅ 메시지 저장
 exports.saveMessage = async (req, res) => {
 
@@ -45,7 +52,7 @@ exports.saveMessage = async (req, res) => {
 
     await db.query(
       `INSERT INTO messages (sender_username, receiver_username, receiver_name, content, file_url, file_name) 
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?)`,
       [
         sender_username,
         receiver_username,
